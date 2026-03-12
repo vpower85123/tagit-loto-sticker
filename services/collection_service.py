@@ -3,11 +3,14 @@ Collection Service
 Verwaltet die Sticker-Collection (Liste der generierten Sticker)
 """
 
+import logging
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, asdict
 from PIL import Image
 from PyQt6.QtCore import QObject, pyqtSignal
 import json
+
+logger = logging.getLogger(__name__)
 from pathlib import Path
 
 
@@ -217,7 +220,7 @@ class CollectionService(QObject):
                 json.dump(data, f, indent=2, ensure_ascii=False)
             return True
         except Exception as e:
-            print(f"Fehler beim Speichern: {e}")
+            logger.error(f"Fehler beim Speichern: {e}")
             return False
     
     def load_from_file(self, filepath: Path) -> bool:
@@ -242,7 +245,7 @@ class CollectionService(QObject):
             
             return True
         except Exception as e:
-            print(f"Fehler beim Laden: {e}")
+            logger.error(f"Fehler beim Laden: {e}")
             return False
     
     def duplicate_item(self, index: int) -> Optional[int]:

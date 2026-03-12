@@ -272,7 +272,7 @@ class StickerGenerator:
         else:
             txts = [header_token] + [ln.upper() for ln in lines]
         
-        print(f"*** STICKER GEN DEBUG (rectangle): lines={lines}, txts={txts} ***")
+        logger.debug(f"STICKER GEN (rectangle): lines={lines}, txts={txts}")
 
         text_area_start = symbol_offset_x_px + symbol_size_px + text_margin_px
         text_area_width = max(10, w - text_area_start - text_margin_px - qr_reserved_px)

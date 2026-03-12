@@ -1313,37 +1313,37 @@ class EquipmentController(QObject):
         
         # Zuerst prüfen: Hat das erste Equipment eine gespeicherte sticker_config?
         imported_loto_mode_single = None  # None = nicht definiert
-        print(f"*** DEBUG: Prüfe sticker_config für System {system_name}, {item.childCount()} Kinder ***")
+        logger.debug(f"Prüfe sticker_config für System {system_name}, {item.childCount()} Kinder")
         for i in range(item.childCount()):
             equip_item = item.child(i)
             if equip_item:
                 eq_data = equip_item.data(0, Qt.ItemDataRole.UserRole)
-                print(f"*** DEBUG: Child {i} eq_data type={eq_data.get('type') if eq_data else None} ***")
+                logger.debug(f"Child {i} eq_data type={eq_data.get('type') if eq_data else None}")
                 if eq_data and eq_data.get('type') == 'equipment':
                     location = eq_data.get('location', '')
                     system = eq_data.get('system', '')
                     eq_name = eq_data.get('name', '')
-                    print(f"*** DEBUG: Equipment={eq_name}, Location={location}, System={system} ***")
+                    logger.debug(f"Equipment={eq_name}, Location={location}, System={system}")
                     try:
                         equipment_list = self.equipment_manager.get_equipment(location, system)
-                        print(f"*** DEBUG: {len(equipment_list)} Equipments gefunden ***")
+                        logger.debug(f"{len(equipment_list)} Equipments gefunden")
                         for eq in equipment_list:
-                            print(f"*** DEBUG: Vergleiche '{eq.get('name', '')}' mit '{eq_name}' ***")
+                            logger.debug(f"Vergleiche '{eq.get('name', '')}' mit '{eq_name}'")
                             if eq.get('name', '') == eq_name:
                                 sticker_cfg = eq.get('sticker_config', {})
-                                print(f"*** DEBUG: sticker_config gefunden: {bool(sticker_cfg)}, loto_mode_single in config: {'loto_mode_single' in sticker_cfg if sticker_cfg else False} ***")
+                                logger.debug(f"sticker_config gefunden: {bool(sticker_cfg)}, loto_mode_single in config: {'loto_mode_single' in sticker_cfg if sticker_cfg else False}")
                                 if sticker_cfg and 'loto_mode_single' in sticker_cfg:
                                     imported_loto_mode_single = sticker_cfg.get('loto_mode_single')
-                                    print(f"*** Import: loto_mode_single={imported_loto_mode_single} aus Equipment '{eq_name}' ***")
+                                    logger.debug(f"Import: loto_mode_single={imported_loto_mode_single} aus Equipment '{eq_name}'")
                                 break
                     except Exception as e:
-                        print(f"*** DEBUG: Fehler beim Laden: {e} ***")
+                        logger.error(f"Fehler beim Laden: {e}")
                     break  # Nur erstes Equipment prüfen
         
         # Wenn System-Name "SINGLELOTOCOUNT" enthält, als Single Count behandeln
         if imported_loto_mode_single is None and "SINGLELOTOCOUNT" in system_name.upper().replace(" ", "").replace("_", ""):
             imported_loto_mode_single = True
-            print(f"*** System-Name '{system_name}' enthält SINGLELOTOCOUNT → Single Count Modus ***")
+            logger.debug(f"System-Name '{system_name}' enthält SINGLELOTOCOUNT -> Single Count Modus")
         
         # Config vom ersten Equipment laden (alle im System sollten gleiche Config haben)
         first_config_loaded = False
@@ -1379,7 +1379,7 @@ class EquipmentController(QObject):
             # Gespeicherte Config hat absoluten Vorrang!
             should_generate_multi = not imported_loto_mode_single and count > 0
             should_generate_single = imported_loto_mode_single and count > 0
-            print(f"*** IMPORT Config überschreibt: Multi-LOTO={not imported_loto_mode_single}, Single-LOTO={imported_loto_mode_single} ***")
+            logger.debug(f"IMPORT Config überschreibt: Multi-LOTO={not imported_loto_mode_single}, Single-LOTO={imported_loto_mode_single}")
             
             # Radio-Buttons entsprechend setzen UND internen State synchronisieren
             if hasattr(self.parent_app, 'single_loto_radio') and hasattr(self.parent_app, 'multi_loto_radio'):
@@ -1391,24 +1391,24 @@ class EquipmentController(QObject):
             if hasattr(self.parent_app, '_on_loto_mode_changed'):
                 mode = 'single' if imported_loto_mode_single else 'multi'
                 self.parent_app._on_loto_mode_changed(mode)
-                print(f"*** LOTO Modus synchronisiert: {mode} ***")
+                logger.debug(f"LOTO Modus synchronisiert: {mode}")
         elif hasattr(self.parent_app, 'multi_loto_radio') and self.parent_app.multi_loto_radio.isChecked():
             # Fallback: Aktueller Radio-Button - Multi
             should_generate_multi = count > 0
             should_generate_single = False
-            print(f"*** Radio-Button: Multi-LOTO aktiv ***")
+            logger.debug("Radio-Button: Multi-LOTO aktiv")
         elif hasattr(self.parent_app, 'single_loto_radio') and self.parent_app.single_loto_radio.isChecked():
             # Fallback: Aktueller Radio-Button - Single
             should_generate_multi = False
             should_generate_single = count > 0
-            print(f"*** Radio-Button: Single-LOTO aktiv ***")
+            logger.debug("Radio-Button: Single-LOTO aktiv")
         else:
             should_generate_multi = False
             should_generate_single = False
         
         # Single-LOTO: Für jeden Sticker DIESES Systems einen Count-Sticker erstellen
         if should_generate_single:
-            print(f"*** Prüfe Single-Count-Sticker für System '{system_name}' ({count} Items) ***")
+            logger.debug(f"Prüfe Single-Count-Sticker für System '{system_name}' ({count} Items)")
             try:
                 # Ermittle die tatsächliche Gruppe, die die Items bekommen haben
                 # (kann loto_group aus sticker_config sein oder system_name)
@@ -1428,7 +1428,7 @@ class EquipmentController(QObject):
                         count_id = item_data[2] if len(item_data) > 2 else ""
                         existing_count_ids.add(count_id)
                 
-                print(f"*** Existierende Count-Sticker: {existing_count_ids} ***")
+                logger.debug(f"Existierende Count-Sticker: {existing_count_ids}")
                 
                 # Für jeden regulären Sticker dieses Systems prüfen ob Count-Sticker fehlt
                 created_count = 0
@@ -1438,7 +1438,7 @@ class EquipmentController(QObject):
                     expected_count_id = f"C_{e_id}"
                     
                     if expected_count_id in existing_count_ids:
-                        print(f"*** SKIP: Count-Sticker {expected_count_id} existiert bereits ***")
+                        logger.debug(f"SKIP: Count-Sticker {expected_count_id} existiert bereits")
                         continue
                     
                     if e_id and equip and e_id != equip:
@@ -1453,34 +1453,34 @@ class EquipmentController(QObject):
                         {"type": "count_single", "details": detail_str}, count_img
                     ])
                     created_count += 1
-                    print(f"*** Single-Count-Sticker #{created_count} erstellt für {e_id} ***")
+                    logger.debug(f"Single-Count-Sticker #{created_count} erstellt für {e_id}")
                 
-                print(f"*** {created_count} neue Count-Sticker erstellt (von {len(regular_items)} Items in System '{system_name}') ***")
+                logger.debug(f"{created_count} neue Count-Sticker erstellt (von {len(regular_items)} Items in System '{system_name}')")
                 
                 if hasattr(self.parent_app, 'update_collection_list'):
                     self.parent_app.update_collection_list()
                     
             except Exception as e:
-                print(f"*** Fehler beim Generieren der Single-Count-Sticker: {e} ***")
+                logger.error(f"Fehler beim Generieren der Single-Count-Sticker: {e}")
                 import traceback
                 traceback.print_exc()
         
         # Multi-LOTO: Regeneriere per-group Count-Sticker (ein Count pro Gruppe)
         if should_generate_multi:
-            print(f"*** Starte Multi-Count-Sticker Generierung für System '{system_name}' ***")
+            logger.debug(f"Starte Multi-Count-Sticker Generierung für System '{system_name}'")
             try:
                 if hasattr(self.parent_app, '_regenerate_multi_count_sticker'):
                     self.parent_app._regenerate_multi_count_sticker()
-                    print(f"*** Multi-Count-Sticker regeneriert (per-group) ***")
+                    logger.debug("Multi-Count-Sticker regeneriert (per-group)")
             except Exception as e:
-                print(f"*** Fehler beim Generieren des Multi-Count-Stickers: {e} ***")
+                logger.error(f"Fehler beim Generieren des Multi-Count-Stickers: {e}")
                 import traceback
                 traceback.print_exc()
         elif not should_generate_single:
             if count < 2:
-                print(f"*** Count-Sticker nicht generiert - zu wenig Items ({count}) ***")
+                logger.debug(f"Count-Sticker nicht generiert - zu wenig Items ({count})")
             else:
-                print(f"*** Count-Sticker nicht generiert - Benutzer hat abgelehnt ***")
+                logger.debug("Count-Sticker nicht generiert - Benutzer hat abgelehnt")
         
         if count > 0 and self.parent_app and hasattr(self.parent_app, 'status_bar') and self.parent_app.status_bar:
             self.parent_app.status_bar.showMessage(
@@ -1650,22 +1650,22 @@ class EquipmentController(QObject):
                 # LOTO-Modus wiederherstellen - NUR wenn explizit gespeichert
                 if 'loto_mode_single' in sticker_config:
                     loto_mode_single = sticker_config.get('loto_mode_single')
-                    print(f"*** DEBUG Config: loto_mode_single={loto_mode_single} (aus gespeicherter Config) ***")
+                    logger.debug(f"Config: loto_mode_single={loto_mode_single} (aus gespeicherter Config)")
                     if hasattr(self.parent_app, 'single_loto_radio') and hasattr(self.parent_app, 'multi_loto_radio'):
                         if loto_mode_single:
                             self.parent_app.single_loto_radio.setChecked(True)
-                            print(f"*** Single LOTO Radio aktiviert ***")
+                            logger.debug("Single LOTO Radio aktiviert")
                         else:
                             self.parent_app.multi_loto_radio.setChecked(True)
-                            print(f"*** Multi LOTO Radio aktiviert ***")
-                        print(f"*** Nach Setzen: Single={self.parent_app.single_loto_radio.isChecked()}, Multi={self.parent_app.multi_loto_radio.isChecked()} ***")
+                            logger.debug("Multi LOTO Radio aktiviert")
+                        logger.debug(f"Nach Setzen: Single={self.parent_app.single_loto_radio.isChecked()}, Multi={self.parent_app.multi_loto_radio.isChecked()}")
                     # _on_loto_mode_changed aufrufen, da clicked-Signal bei setChecked nicht feuert
                     if hasattr(self.parent_app, '_on_loto_mode_changed'):
                         mode = 'single' if loto_mode_single else 'multi'
                         self.parent_app._on_loto_mode_changed(mode)
-                        print(f"*** LOTO Modus synchronisiert: {mode} ***")
+                        logger.debug(f"LOTO Modus synchronisiert: {mode}")
                 else:
-                    print(f"*** DEBUG Config: loto_mode_single nicht in Config - Radio-Buttons bleiben unverändert ***")
+                    logger.debug("loto_mode_single nicht in Config - Radio-Buttons bleiben unverändert")
                 
                 # UI aktualisieren (falls Spinboxes etc. vorhanden)
                 self.parent_app.sticker_service.generator._qr_cache.clear()
@@ -1674,9 +1674,9 @@ class EquipmentController(QObject):
                 if hasattr(self.parent_app, 'safe_update_count_preview'):
                     self.parent_app.safe_update_count_preview()
                 
-                print(f"*** Sticker-Config (inkl. Count) wiederhergestellt für Equipment: {equipment_name} ***")
+                logger.debug(f"Sticker-Config (inkl. Count) wiederhergestellt für Equipment: {equipment_name}")
             except Exception as e:
-                print(f"*** Fehler beim Wiederherstellen der Config: {e} ***")
+                logger.error(f"Fehler beim Wiederherstellen der Config: {e}")
         
         # QR-Code im Generator setzen/zurücksetzen (nur wenn keine volle Config geladen wurde oder kein QR in Config)
         if hasattr(self.parent_app, 'sticker_service') and (not load_config or not sticker_config):
@@ -1684,14 +1684,14 @@ class EquipmentController(QObject):
                 if qr_path and qr_path.strip():
                     self.parent_app.sticker_service.generator.cfg.qr_mode_enabled = True
                     self.parent_app.sticker_service.generator.cfg.qr_image_path = qr_path
-                    print(f"*** QR-Code für Equipment gesetzt: {qr_path} ***")
+                    logger.debug(f"QR-Code für Equipment gesetzt: {qr_path}")
                 else:
                     self.parent_app.sticker_service.generator.cfg.qr_mode_enabled = False
                     self.parent_app.sticker_service.generator.cfg.qr_image_path = None
-                    print(f"*** QR-Code deaktiviert (kein QR hinterlegt) ***")
+                    logger.debug("QR-Code deaktiviert (kein QR hinterlegt)")
                 self.parent_app.sticker_service.generator._qr_cache.clear()
             except Exception as e:
-                print(f"*** Fehler beim Setzen des QR-Codes: {e} ***")
+                logger.error(f"Fehler beim Setzen des QR-Codes: {e}")
         
         # Nutze Parent-App zum Hinzufügen
         if hasattr(self.parent_app, 'energy_entry'):
@@ -2244,16 +2244,16 @@ class EquipmentController(QObject):
         current_qr_path = ""
         try:
             equipment_list = self.equipment_manager.get_equipment(location, system)
-            print(f"*** DEBUG QR: Equipment List für {system}: {equipment_list} ***")
+            logger.debug(f"QR: Equipment List für {system}: {equipment_list}")
             for eq in equipment_list:
                 if eq.get('name', '') == equipment_name:
                     current_qr_path = eq.get('qr_path', '')
-                    print(f"*** DEBUG QR: Gefunden! Equipment={equipment_name}, qr_path={current_qr_path} ***")
+                    logger.debug(f"QR: Gefunden! Equipment={equipment_name}, qr_path={current_qr_path}")
                     break
             if not current_qr_path:
-                print(f"*** DEBUG QR: KEIN QR-PATH für {equipment_name} gefunden! ***")
+                logger.debug(f"QR: KEIN QR-PATH für {equipment_name} gefunden!")
         except Exception as e:
-            print(f"*** DEBUG QR: Exception beim Laden: {e} ***")
+            logger.error(f"QR: Exception beim Laden: {e}")
             pass
         
         # Öffne Dialog

@@ -3,6 +3,7 @@ Count Settings Dialog
 Dialog für die Konfiguration von Count-Sticker-Einstellungen
 """
 
+import logging
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea,
@@ -17,6 +18,8 @@ from ui.form_helpers import (
     style_text_input, style_form_button,
     create_form_row, create_row_container, set_uniform_field_width
 )
+
+logger = logging.getLogger(__name__)
 
 # Gemeinsame Breite für alle Einstellungsdialoge
 SETTINGS_DIALOG_WIDTH = 620
@@ -329,7 +332,7 @@ class CountSettingsDialog(QDialog):
                         if hasattr(parent, 'update_collection_list'):
                             parent.update_collection_list()
                 except Exception as e:
-                    print(f"Count single preview update failed: {e}")
+                    logger.error(f"Count single preview update failed: {e}")
             
             # Wähle Count-Sticker aus und aktualisiere Vorschau direkt
             if count_item_idx >= 0:

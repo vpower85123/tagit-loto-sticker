@@ -1,6 +1,7 @@
 # ---------- Utility-Funktionen ----------
 import sys
 import os
+import logging
 from typing import List, Optional, Tuple, cast
 import io
 import base64
@@ -17,6 +18,8 @@ from PySide6.QtWidgets import (
     QListWidget, QListWidgetItem, QFileDialog, QMessageBox, QScrollArea,
     QSizePolicy, QToolButton, QDialog, QGroupBox, QRadioButton, QButtonGroup
 )
+
+logger = logging.getLogger(__name__)
 
 def mm_to_px(mm: float, dpi: float) -> float:
     return (mm / 25.4) * dpi
@@ -1790,7 +1793,7 @@ class MainWindow(QMainWindow):
             qimg = pil_to_qimage(base_img)
         except Exception as e:
             # Fallback: just base image
-            print(f"[ERROR] Preview generation failed: {e}")
+            logger.error(f"Preview generation failed: {e}")
             import traceback
             traceback.print_exc()
             qimg = pil_to_qimage(self.pil_img)
@@ -1837,7 +1840,7 @@ class MainWindow(QMainWindow):
                 # Extrahiere Seitennummer aus Label (z.B. "Seite 1" -> 0)
                 try:
                     page_num = int(page_label.split()[-1]) - 1
-                except:
+                except (ValueError, IndexError):
                     page_num = 0
                 page_polygons[page_num].append(poly)
             
@@ -2022,7 +2025,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             import traceback
             traceback.print_exc()
-            print(f"Fehler beim Export von {path}: {e}")
+            logger.error(f"Fehler beim Export von {path}: {e}")
             return False
 
     def run_analysis(self):
@@ -2185,14 +2188,14 @@ class MainWindow(QMainWindow):
             self.list_stash.addItem(f"Gesamt: {total} Kontur(en)")
 
     def move_analysis_to_stash(self):
-        print(f"DEBUG move_analysis_to_stash: polygons={len(self.polygons)}, last={len(getattr(self, '_last_polygons', []))}")
+        logger.debug(f"move_analysis_to_stash: polygons={len(self.polygons)}, last={len(getattr(self, '_last_polygons', []))}")
         if not self.polygons:
             if hasattr(self, '_last_polygons') and self._last_polygons:
                 self.polygons = self._last_polygons
                 self.poly_types = self._last_poly_types
-                print(f"DEBUG: Restored from last_polygons, count={len(self.polygons)}")
+                logger.debug(f"Restored from last_polygons, count={len(self.polygons)}")
             else:
-                print("DEBUG: No polygons to stash")
+                logger.debug("No polygons to stash")
                 QMessageBox.information(self, "Hinweis", "Keine Konturen vorhanden.")
                 return
         self.stash_polygons = getattr(self, 'stash_polygons', [])
@@ -2200,12 +2203,12 @@ class MainWindow(QMainWindow):
         self.stash_page_info = getattr(self, 'stash_page_info', [])
         page_label = self._get_current_page_label()
         count = len(self.polygons)
-        print(f"DEBUG: Moving {count} polygons to stash")
+        logger.debug(f"Moving {count} polygons to stash")
         self.stash_polygons.extend(self.polygons)
         self.stash_types.extend(self.poly_types)
         for _ in self.polygons:
             self.stash_page_info.append(page_label)
-        print(f"DEBUG: Stash now has {len(self.stash_polygons)} total polygons")
+        logger.debug(f"Stash now has {len(self.stash_polygons)} total polygons")
         self.polygons = []
         self.poly_types = []
         self._last_polygons = []

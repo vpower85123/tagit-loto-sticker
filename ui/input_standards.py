@@ -6,15 +6,18 @@ WICHTIG: Diese Parameter MÜSSEN vor dem Erstellen von Eingabefeldern geprüft w
 
 Checkliste für neue Eingabefelder:
 ----------------------------------
-☐ Mindesthöhe gesetzt? (MIN_INPUT_HEIGHT)
+☐ Mindesthoehe gesetzt? (MIN_INPUT_HEIGHT)
 ☐ Textfarbe dunkel genug? (INPUT_TEXT_COLOR)
-☐ Schriftgröße lesbar? (INPUT_FONT_SIZE)
+☐ Schriftgroesse lesbar? (INPUT_FONT_SIZE)
 ☐ Ausreichend Padding? (INPUT_PADDING)
 ☐ Focus-State definiert? (FOCUS_BORDER_COLOR)
-☐ Bei Tabellen: Zeilenhöhe >= MIN_TABLE_ROW_HEIGHT?
+☐ Bei Tabellen: Zeilenhoehe >= MIN_TABLE_ROW_HEIGHT?
 """
 
+import logging
 from PyQt6.QtGui import QColor
+
+logger = logging.getLogger(__name__)
 
 # ============================================================
 # EINGABEFELD STANDARDS
@@ -186,7 +189,7 @@ def validate_input_params(
     Verwendung:
         warnings = validate_input_params(height=30, row_height=35)
         if warnings:
-            print("⚠️ UI Standards nicht eingehalten:")
+            logger.warning(" UI Standards nicht eingehalten:")
             for w in warnings:
                 print(f"  - {w}")
     """

@@ -231,7 +231,7 @@ def draw_cut_contour(c, x_pt, y_pt, width_pt, height_pt, offset_mm, pt_per_mm, c
     try:
         # Versuche CMYKColorSep (bessere Separation für RasterLink)
         magenta = CMYKColorSep(0, 1, 0, 0, spotName='CutContour')
-    except:
+    except Exception:
         # Fallback zu CMYKColor
         magenta = CMYKColor(0, 1, 0, 0, spotName='CutContour')
     

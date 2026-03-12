@@ -3,11 +3,14 @@ Equipment Service
 Wrapper um EquipmentManager mit Suchfunktionalität
 """
 
+import logging
 from typing import List, Dict
 from PyQt6.QtCore import QObject, pyqtSignal
 from pathlib import Path
 
 from managers.equipment_manager import EquipmentManager
+
+logger = logging.getLogger(__name__)
 
 
 class EquipmentService(QObject):
@@ -39,7 +42,7 @@ class EquipmentService(QObject):
             self.clear_search_cache()
             return True
         except Exception as e:
-            print(f"Fehler beim Speichern: {e}")
+            logger.error(f"Fehler beim Speichern: {e}")
             return False
     
     def search(self, query: str) -> List[Dict[str, str]]:

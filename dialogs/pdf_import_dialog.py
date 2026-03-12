@@ -271,7 +271,7 @@ class PDFImportDialog(QDialog):
             return temp_path
             
         except Exception as e:
-            print(f"QR-Code Extraktion fehlgeschlagen: {e}")
+            logger.error(f"QR-Code Extraktion fehlgeschlagen: {e}")
             return None
     
     def cleanup_temp_files(self):
@@ -281,7 +281,7 @@ class PDFImportDialog(QDialog):
                 if os.path.exists(temp_file):
                     os.unlink(temp_file)
             except Exception as e:
-                print(f"Konnte temporäre Datei nicht löschen {temp_file}: {e}")
+                logger.warning(f"Konnte temporäre Datei nicht löschen {temp_file}: {e}")
         self.temp_qr_files.clear()
 
     def extract_data(self):
@@ -298,10 +298,10 @@ class PDFImportDialog(QDialog):
             self.extracted_data = []
             self.count_sticker_groups = []  # Reset bei erneutem Parsen
             
-            print(f"\n*** PDF hat {len(doc)} Seiten ***\n")
+            logger.debug(f"PDF hat {len(doc)} Seiten")
             
             for page_num, page in enumerate(doc):
-                print(f"\n*** Verarbeite Seite {page_num + 1}/{len(doc)} ***")
+                logger.debug(f"Verarbeite Seite {page_num + 1}/{len(doc)}")
                 
                 # ALTE METHODE: Verwende einfache Text-Extraktion mit dict
                 text_dict = page.get_text("dict")
@@ -323,9 +323,9 @@ class PDFImportDialog(QDialog):
                             if r > 0.7 and g > 0.5 and b < 0.4:
                                 yellow_rects.append(d["rect"])
                     if yellow_rects:
-                        print(f"DEBUG: {len(yellow_rects)} gelbe Rechtecke erkannt auf Seite {page_num + 1}")
+                        logger.debug(f"{len(yellow_rects)} gelbe Rechtecke erkannt auf Seite {page_num + 1}")
                 except Exception as e:
-                    print(f"DEBUG: get_drawings fehlgeschlagen: {e} - akzeptiere alle Sticker")
+                    logger.debug(f"get_drawings fehlgeschlagen: {e} - akzeptiere alle Sticker")
                     yellow_rects = []
                 
                 # Durchsuche alle Textblöcke
@@ -351,7 +351,7 @@ class PDFImportDialog(QDialog):
                             # Wenn vorher ein Count-Sticker lief, speichere ihn
                             if in_count_sticker and current_count_sticker_items:
                                 self.count_sticker_groups.append(list(current_count_sticker_items))
-                                print(f"DEBUG: Count-Sticker Gruppe gespeichert ({len(current_count_sticker_items)} Items): {current_count_sticker_items}")
+                                logger.debug(f"Count-Sticker Gruppe gespeichert ({len(current_count_sticker_items)} Items): {current_count_sticker_items}")
                                 current_count_sticker_items = []
                             in_count_sticker = True
                             # Vorherigen regulären Sticker abschließen
@@ -375,17 +375,17 @@ class PDFImportDialog(QDialog):
                                     # Validiere: Muss mit Energy-ID Pattern beginnen
                                     if re.match(r'^[EPMC]\d+', entry, re.IGNORECASE):
                                         current_count_sticker_items.append(entry.upper())
-                                        print(f"DEBUG: Count-Sticker Entry: '{entry.upper()}'")
+                                        logger.debug(f"Count-Sticker Entry: '{entry.upper()}'")
                                 continue
                             else:
                                 # Nicht-Energy-ID Text beendet den Count-Sticker
                                 if current_count_sticker_items:
                                     self.count_sticker_groups.append(list(current_count_sticker_items))
-                                    print(f"DEBUG: Count-Sticker Gruppe gespeichert ({len(current_count_sticker_items)} Items)")
+                                    logger.debug(f"Count-Sticker Gruppe gespeichert ({len(current_count_sticker_items)} Items)")
                                     current_count_sticker_items = []
                                 in_count_sticker = False
                         
-                        print(f"DEBUG: Textzeile gefunden: '{line_text}'")
+                        logger.debug(f"Textzeile gefunden: '{line_text}'")
                         
                         # Prüfe auf Energy ID Pattern - verschiedene Formate:
                         # Format 1: "E1 ADTA.D.IF.RC01" - Energy ID + Leerzeichen + Equipment
@@ -409,15 +409,15 @@ class PDFImportDialog(QDialog):
                                 # Prüfe ob die Nummer plausibel ist (1-99)
                                 num = int(number_only_match.group(1))
                                 if num >= 1 and num <= 99:
-                                    print(f"DEBUG: Nummer ohne Präfix gefunden: {num} - wird als E{num} interpretiert")
+                                    logger.debug(f"Nummer ohne Präfix gefunden: {num} - wird als E{num} interpretiert")
                         
                         if energy_match:
                             # Energy ID mit Equipment auf gleicher Zeile (Leerzeichen-Trennung)
-                            print(f"DEBUG: Energy ID + Equipment gefunden: {energy_match.group(1)} - {energy_match.group(2)}")
+                            logger.debug(f"Energy ID + Equipment gefunden: {energy_match.group(1)} - {energy_match.group(2)}")
                             # Neuer Sticker beginnt
                             if current_sticker.get("energy_id"):
                                 stickers_data.append(current_sticker)
-                                print(f"DEBUG: Vorheriger Sticker gespeichert: {current_sticker['energy_id']}")
+                                logger.debug(f"Vorheriger Sticker gespeichert: {current_sticker['energy_id']}")
                             
                             eid = energy_match.group(1).upper()
                             equipment = energy_match.group(2).strip()
@@ -439,11 +439,11 @@ class PDFImportDialog(QDialog):
                             eid = line_text.upper()
                             equipment = ""  # Equipment ist leer bei diesem Format
                             
-                            print(f"DEBUG: Energy ID (Punkt-Format) gefunden: {eid}")
+                            logger.debug(f"Energy ID (Punkt-Format) gefunden: {eid}")
                             
                             if current_sticker.get("energy_id"):
                                 stickers_data.append(current_sticker)
-                                print(f"DEBUG: Vorheriger Sticker gespeichert: {current_sticker['energy_id']}")
+                                logger.debug(f"Vorheriger Sticker gespeichert: {current_sticker['energy_id']}")
                             
                             current_sticker = {"energy_id": eid, "equipment": equipment, "_bbox": line["bbox"]}
                             
@@ -464,22 +464,22 @@ class PDFImportDialog(QDialog):
                             equipment = number_only_match.group(2).strip()
                             eid = f"E{num}"
                             
-                            print(f"DEBUG: Energy ID (aus Nummer) + Equipment gefunden: {eid} - {equipment}")
+                            logger.debug(f" Energy ID (aus Nummer) + Equipment gefunden: {eid} - {equipment}")
                             
                             if current_sticker.get("energy_id"):
                                 stickers_data.append(current_sticker)
-                                print(f"DEBUG: Vorheriger Sticker gespeichert: {current_sticker['energy_id']}")
+                                logger.debug(f" Vorheriger Sticker gespeichert: {current_sticker['energy_id']}")
                             
                             current_sticker = {"energy_id": eid, "equipment": equipment, "symbol_type": "ELECTRICAL", "_bbox": line["bbox"]}
                         
                         # Prüfe ob NUR Energy ID (z.B. "E1" allein)
                         elif re.match(r'^([EPMC]\d+)$', line_text, re.IGNORECASE):
                             energy_only = re.match(r'^([EPMC]\d+)$', line_text, re.IGNORECASE)
-                            print(f"DEBUG: Energy ID Match gefunden: {energy_only.group(1)}")
+                            logger.debug(f" Energy ID Match gefunden: {energy_only.group(1)}")
                             # Neuer Sticker beginnt
                             if current_sticker.get("energy_id"):
                                 stickers_data.append(current_sticker)
-                                print(f"DEBUG: Vorheriger Sticker gespeichert: {current_sticker['energy_id']}")
+                                logger.debug(f" Vorheriger Sticker gespeichert: {current_sticker['energy_id']}")
                             
                             eid = energy_only.group(1).upper()
                             current_sticker = {"energy_id": eid}
@@ -512,7 +512,7 @@ class PDFImportDialog(QDialog):
                 # Letzten Count-Sticker speichern
                 if current_count_sticker_items:
                     self.count_sticker_groups.append(list(current_count_sticker_items))
-                    print(f"DEBUG: Letzte Count-Sticker Gruppe gespeichert: {current_count_sticker_items}")
+                    logger.debug(f" Letzte Count-Sticker Gruppe gespeichert: {current_count_sticker_items}")
                     current_count_sticker_items = []
                 
                 # Gelb-Filter: Nur Sticker innerhalb gelber Rechtecke behalten
@@ -532,7 +532,7 @@ class PDFImportDialog(QDialog):
                         if in_yellow:
                             filtered.append(s)
                         else:
-                            print(f"DEBUG: Sticker '{s.get('energy_id', '')}' nicht in gelbem Bereich → übersprungen")
+                            logger.debug(f" Sticker '{s.get('energy_id', '')}' nicht in gelbem Bereich → übersprungen")
                     stickers_data = filtered
                 
                 # Entferne interne bbox-Daten
@@ -561,7 +561,7 @@ class PDFImportDialog(QDialog):
                         existing = unique_stickers[key]
                         if sticker.get("description") and not existing.get("description"):
                             unique_stickers[key] = sticker
-                        print(f"DEBUG: Duplikat entfernt: {key}")
+                        logger.debug(f" Duplikat entfernt: {key}")
                 
                 stickers_data = list(unique_stickers.values())
                 
@@ -571,7 +571,7 @@ class PDFImportDialog(QDialog):
                         # Count-Sticker überspringen (Beschreibung enthält "LOTO POINTS")
                         desc = sticker.get("description", "")
                         if "LOTO POINTS" in desc.upper():
-                            print(f"DEBUG: Count-Sticker übersprungen: {sticker.get('energy_id', '')} - {desc}")
+                            logger.debug(f" Count-Sticker übersprungen: {sticker.get('energy_id', '')} - {desc}")
                             continue
                         
                         # Automatische Trennung von Energy-ID und Equipment
@@ -586,9 +586,9 @@ class PDFImportDialog(QDialog):
                         
                         self.extracted_data.append(sticker)
                         eq = sticker.get("equipment", "")[:30]
-                        print(f"*** Sticker hinzugefügt: {sticker['energy_id']} - {eq} ***")
+                        logger.debug(f" Sticker hinzugefügt: {sticker['energy_id']} - {eq}")
                 
-                print(f"*** Seite {page_num + 1} abgeschlossen: {len(self.extracted_data)} Sticker insgesamt ***")
+                logger.debug(f" Seite {page_num + 1} abgeschlossen: {len(self.extracted_data)} Sticker insgesamt")
                 
                 # QR-Code einmal pro Import extrahieren (von erster Seite mit Stickern)
                 qr_path_for_page = None
@@ -604,11 +604,11 @@ class PDFImportDialog(QDialog):
                         qr_path_for_page = self._extract_qr_from_sticker(page, bbox)
                         self.import_qr_path = qr_path_for_page  # Globaler Fallback
                         if qr_path_for_page:
-                            logger.info(f"*** QR-Code erfolgreich extrahiert: {qr_path_for_page} ***")
+                            logger.info(f"*** QR-Code erfolgreich extrahiert: {qr_path_for_page}")
                         else:
-                            logger.warning("*** QR-Code Extraktion fehlgeschlagen (None zurückgegeben) ***")
+                            logger.warning("*** QR-Code Extraktion fehlgeschlagen (None zurückgegeben)")
                     except Exception as e:
-                        logger.error(f"*** QR-Code Extraktion Exception: {e} ***")
+                        logger.error(f"*** QR-Code Extraktion Exception: {e}")
                         qr_path_for_page = None
                 
                 # QR-Code-Pfad zu jedem Sticker hinzufügen
@@ -650,13 +650,13 @@ class PDFImportDialog(QDialog):
                 key = _global_dedup_key(entry)
                 if key in seen_keys:
                     global_dupes += 1
-                    print(f"DEBUG GLOBAL: Duplikat entfernt: {key}")
+                    logger.debug(f"GLOBAL: Duplikat entfernt: {key}")
                     continue
                 seen_keys.add(key)
                 deduped_data.append(entry)
             
             if global_dupes:
-                print(f"*** GLOBAL DEDUP: {global_dupes} Duplikate entfernt ***")
+                logger.debug(f" GLOBAL DEDUP: {global_dupes} Duplikate entfernt")
             self.extracted_data = deduped_data
             
             self.update_table()
@@ -704,7 +704,7 @@ class PDFImportDialog(QDialog):
         Der extrahierte QR wird auf weißem Hintergrund mit Padding gespeichert.
         Jeder Import bekommt einen eindeutigen Dateinamen basierend auf Zeitstempel.
         """
-        print("=== _extract_qr_from_sticker AUFGERUFEN ===")
+        logger.debug(" _extract_qr_from_sticker AUFGERUFEN ===")
         
         # Generiere eindeutigen Dateinamen für diesen Import
         import time
@@ -724,7 +724,7 @@ class PDFImportDialog(QDialog):
             # Verwende samples statt tobytes für korrekte Array-Konvertierung
             img_array = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
             
-            print(f"DEBUG QR: Bild-Shape: {img_array.shape}, pix.n={pix.n}")
+            logger.debug(f"QR: Bild-Shape: {img_array.shape}, pix.n={pix.n}")
             
             # Konvertiere zu BGR für OpenCV
             if pix.n == 4:
@@ -751,7 +751,7 @@ class PDFImportDialog(QDialog):
                     if info and len(info) > 0:
                         qr_content = info
                         qr_points = points[idx] if points is not None and len(points) > idx else None
-                        print(f"*** QR gefunden (direkt): {qr_content[:50]}... ***")
+                        logger.debug(f" QR gefunden (direkt): {qr_content[:50]}...")
                         break
             
             # Methode 2: Graustufen + Threshold
@@ -763,7 +763,7 @@ class PDFImportDialog(QDialog):
                         if info and len(info) > 0:
                             qr_content = info
                             qr_points = points[idx] if points is not None and len(points) > idx else None
-                            print(f"*** QR gefunden (threshold): {qr_content[:50]}... ***")
+                            logger.debug(f" QR gefunden (threshold): {qr_content[:50]}...")
                             break
             
             # Methode 3: Adaptive Threshold
@@ -775,7 +775,7 @@ class PDFImportDialog(QDialog):
                         if info and len(info) > 0:
                             qr_content = info
                             qr_points = points[idx] if points is not None and len(points) > idx else None
-                            print(f"*** QR gefunden (adaptive): {qr_content[:50]}... ***")
+                            logger.debug(f" QR gefunden (adaptive): {qr_content[:50]}...")
                             break
             
             # Methode 4: Einzelner QR-Detektor
@@ -784,10 +784,10 @@ class PDFImportDialog(QDialog):
                 if data:
                     qr_content = data
                     qr_points = pts
-                    print(f"*** QR gefunden (single): {qr_content[:50]}... ***")
+                    logger.debug(f" QR gefunden (single): {qr_content[:50]}...")
             
             if qr_content:
-                print(f"*** QR-Code Inhalt: {qr_content[:80]}... ***")
+                logger.debug(f" QR-Code Inhalt: {qr_content[:80]}...")
                 
                 # Extrahiere das Original QR-Bild aus der PDF
                 try:
@@ -803,7 +803,7 @@ class PDFImportDialog(QDialog):
                         qr_x_max = min(img_cv.shape[1], pts[:, 0].max() + padding)
                         qr_y_max = min(img_cv.shape[0], pts[:, 1].max() + padding)
                         
-                        print(f"*** QR-Position: x={qr_x}-{qr_x_max}, y={qr_y}-{qr_y_max} ***")
+                        logger.debug(f" QR-Position: x={qr_x}-{qr_x_max}, y={qr_y}-{qr_y_max}")
                         
                         # Extrahiere QR-Bereich
                         qr_crop = img_cv[qr_y:qr_y_max, qr_x:qr_x_max]
@@ -825,14 +825,14 @@ class PDFImportDialog(QDialog):
                         qr_path = os.path.normpath(qr_path)
                         qr_pil.save(qr_path, "PNG")
                         
-                        print(f"*** Original QR-Code extrahiert und gespeichert: {qr_path} ***")
+                        logger.debug(f" Original QR-Code extrahiert und gespeichert: {qr_path}")
                         logger.info(f"Original QR-Code extrahiert: {qr_path}")
                         return qr_path
                     else:
-                        print("*** Keine QR-Points vorhanden, verwende Fallback ***")
+                        print("*** Keine QR-Points vorhanden, verwende Fallback")
                     
                 except Exception as extract_err:
-                    print(f"*** Fehler beim Extrahieren des Original-QR: {extract_err} ***")
+                    logger.debug(f" Fehler beim Extrahieren des Original-QR: {extract_err}")
                 
                 # Fallback: Generiere neuen QR-Code
                 try:
@@ -858,16 +858,16 @@ class PDFImportDialog(QDialog):
                     qr_path = os.path.normpath(qr_path)
                     qr_img.save(qr_path)
                     
-                    print(f"*** Neuer QR-Code generiert und gespeichert: {qr_path} ***")
+                    logger.debug(f" Neuer QR-Code generiert und gespeichert: {qr_path}")
                     logger.info(f"QR-Code neu generiert und gespeichert: {qr_path}")
                     return qr_path
                     
-                    print(f"*** Neuer QR-Code generiert und gespeichert: {qr_path} ***")
+                    logger.debug(f" Neuer QR-Code generiert und gespeichert: {qr_path}")
                     logger.info(f"QR-Code neu generiert und gespeichert: {qr_path}")
                     return qr_path
                     
                 except ImportError:
-                    print("*** qrcode library nicht installiert, verwende extrahiertes Bild ***")
+                    print("*** qrcode library nicht installiert, verwende extrahiertes Bild")
                     # Fallback: Extrahiere Bild wie vorher
                     qr_idx = 0
                     pts = points[qr_idx]
@@ -892,16 +892,16 @@ class PDFImportDialog(QDialog):
                     cv2.imwrite(qr_path, qr_bw)
                     return qr_path
                 
-                print(f"*** QR-Code gespeichert: {qr_path} ***")
+                logger.debug(f" QR-Code gespeichert: {qr_path}")
                 logger.info(f"QR-Code extrahiert und gespeichert: {qr_path}")
                 return qr_path
             else:
-                print("*** Keine QR-Codes gefunden ***")
+                print("*** Keine QR-Codes gefunden")
                 logger.warning("Keine QR-Codes in der PDF gefunden")
                 return None
         
         except Exception as e:
-            print(f"*** QR-Extraktion fehlgeschlagen: {e} ***")
+            logger.debug(f" QR-Extraktion fehlgeschlagen: {e}")
             logger.error(f"QR-Extraktion fehlgeschlagen: {e}")
             return None
 

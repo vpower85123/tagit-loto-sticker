@@ -2,10 +2,13 @@
 Equipment Dialog für Auswahl von Ausrüstung aus der Hierarchie.
 """
 
+import logging
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QTreeWidget, QTreeWidgetItem, QPushButton, QMenu, QMessageBox
 )
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtCore import Qt, Qt as QtCore_Qt
 from ui.components import ModernComboBox
 from ui.glass_button import GlassGlowButton
@@ -217,7 +220,7 @@ class EquipmentSelectionDialog(QDialog):
                     eq_item.setData(0, Qt.ItemDataRole.UserRole, ('equipment', location, system_name, eq_name))
                     system_item.addChild(eq_item)
         except Exception as e:
-            print(f"Fehler beim Aktualisieren des Equipment Trees: {e}")
+            logger.error(f"Fehler beim Aktualisieren des Equipment Trees: {e}")
 
     def _on_item_clicked(self):
         """Handler für Klick auf Tree-Item"""
@@ -437,7 +440,7 @@ class EquipmentSelectionDialog(QDialog):
                         parent.add_to_collection()
                         added_count += 1
                     except Exception as e:
-                        print(f"Fehler beim Hinzufügen von {eq_data.get('name', '')}: {e}")
+                        logger.error(f"Fehler beim Hinzufügen von {eq_data.get('name', '')}: {e}")
                 
                 self.accept()
                 QMessageBox.information(self, "Erfolg", f"{added_count} Equipment zur Sammlung hinzugefügt")

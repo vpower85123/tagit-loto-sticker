@@ -3,9 +3,12 @@ Sticker Settings Dialog
 Dialog für die Konfiguration von LOTO-Sticker-Einstellungen
 """
 
+import logging
 from pathlib import Path
 from typing import List, Dict, Any
 import json
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea,
     QLineEdit, QColorDialog, QFileDialog, QMessageBox, QPushButton, QLabel
@@ -372,7 +375,7 @@ class StickerSettingsDialog(QDialog):
         if not settings:
             return
         
-        print(f"DEBUG: Settings to apply: {settings}")
+        logger.debug(f"Settings to apply: {settings}")
         
         # Block signals während dem Laden um Signalkaskaden zu vermeiden
         widgets = [
@@ -435,8 +438,8 @@ class StickerSettingsDialog(QDialog):
         for w in widgets:
             w.blockSignals(False)
         
-        print(f"DEBUG: After apply - UI: symbol_size={self.symbol_size_spin.value()}, font_size={self.font_size_spin.value()}")
-        print(f"DEBUG: After apply - Config: symbol_size={self.config.symbol_size_mm}, font_size={self.config.font_size_mm}")
+        logger.debug(f"After apply - UI: symbol_size={self.symbol_size_spin.value()}, font_size={self.font_size_spin.value()}")
+        logger.debug(f"After apply - Config: symbol_size={self.config.symbol_size_mm}, font_size={self.config.font_size_mm}")
 
     def _save_selected_preset(self) -> None:
         presets = self._get_presets()
@@ -448,12 +451,12 @@ class StickerSettingsDialog(QDialog):
     def _load_selected_preset(self) -> None:
         presets = self._get_presets()
         index = max(0, min(2, self.preset_combo.currentIndex()))
-        print(f"DEBUG: Loading preset {index + 1}, presets={presets}")
+        logger.debug(f"Loading preset {index + 1}, presets={presets}")
         preset = presets[index]
         if not preset:
             QMessageBox.information(self, "Preset", f"Preset {index + 1} ist leer.")
             return
-        print(f"DEBUG: Applying preset settings: {preset}")
+        logger.debug(f"Applying preset settings: {preset}")
         self._apply_settings_to_ui(preset)
         self.apply_live_preview()
         QMessageBox.information(self, "Preset", f"Preset {index + 1} wurde geladen.")

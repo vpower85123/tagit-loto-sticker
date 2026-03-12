@@ -1121,7 +1121,7 @@ class StickerApp(QMainWindow):
         try:
             self.update_count_preview()
         except Exception as e:
-            print(f"Fehler bei safe_update_count_preview: {e}")
+            logger.error(f"Fehler bei safe_update_count_preview: {e}")
     
     def update_count_preview(self):
         """Count-Sticker-Vorschau aktualisieren"""
@@ -1175,7 +1175,7 @@ class StickerApp(QMainWindow):
                 )
                 self.preview_label.setPixmap(scaled_pixmap)
         except Exception as e:
-            print(f"Count-Vorschau-Fehler: {e}")
+            logger.error(f"Count-Vorschau-Fehler: {e}")
             import traceback
             traceback.print_exc()
     
@@ -1775,7 +1775,7 @@ class StickerApp(QMainWindow):
                         # Kombiniere beide
                         all_existing = set(existing_count_ids_m1) | set(existing_count_ids_m2)
                         
-                        print(f"*** COUNT CHECK: count_id={count_id}, existing_m1={existing_count_ids_m1}, existing_m2={existing_count_ids_m2} ***")
+                        logger.debug(f"COUNT CHECK: count_id={count_id}, existing_m1={existing_count_ids_m1}, existing_m2={existing_count_ids_m2}")
                         
                         count_exists = count_id in all_existing
                         
@@ -1783,9 +1783,9 @@ class StickerApp(QMainWindow):
                             count_img = self.count_generator.generate(count_detail, 1)
                             count_copies_default = max(1, int(getattr(getattr(self, 'count_config', None), 'count_print_copies', 1)))
                             self.collection.append([count_img, "COUNT_SINGLE", count_id, "", count_detail, {"type": "count_single", "copies": count_copies_default}, count_img])
-                            print(f"*** COUNT ADDED: {count_id}, collection size: {len(self.collection)} ***")
+                            logger.debug(f"COUNT ADDED: {count_id}, collection size: {len(self.collection)}")
                         else:
-                            print(f"*** COUNT SKIPPED: {count_id} already exists ***")
+                            logger.debug(f"COUNT SKIPPED: {count_id} already exists")
                     except Exception as e:
                         logger.warning(f"Count Sticker konnte nicht generiert werden: {e}")
                         import traceback
@@ -1816,7 +1816,7 @@ class StickerApp(QMainWindow):
                 count_id = item[2]
                 if count_id in seen_count_ids:
                     items_to_remove.append(i)
-                    print(f"*** REMOVING DUPLICATE COUNT: {count_id} at index {i} ***")
+                    logger.debug(f"REMOVING DUPLICATE COUNT: {count_id} at index {i}")
                 else:
                     seen_count_ids.add(count_id)
         
@@ -1825,7 +1825,7 @@ class StickerApp(QMainWindow):
             self.collection.pop(i)
         
         if items_to_remove:
-            print(f"*** REMOVED {len(items_to_remove)} DUPLICATE COUNT STICKERS ***")
+            logger.debug(f"REMOVED {len(items_to_remove)} DUPLICATE COUNT STICKERS")
 
     def _add_to_collection_with_thumbnail(self, img, symbol_type_name, energy_id, equipment_name, description, full_info):
         """Helper: Füge Sticker zur Collection mit Thumbnail hinzu"""
@@ -1859,7 +1859,7 @@ class StickerApp(QMainWindow):
             for idx, item in enumerate(self.collection, start=1):
                 # Prüfe item Länge
                 if len(item) < 4:
-                    print(f"*** WARNUNG: Item {idx} übersprungen (len={len(item)}) ***")
+                    logger.warning(f"Item {idx} übersprungen (len={len(item)})")
                     skipped_items += 1
                     continue
                     
@@ -1907,7 +1907,7 @@ class StickerApp(QMainWindow):
                 self.collection_list.addItem(text)
             
             if skipped_items > 0:
-                print(f"*** TOTAL: {skipped_items} Items übersprungen, {self.collection_list.count()} Items angezeigt ***")
+                logger.debug(f"TOTAL: {skipped_items} Items übersprungen, {self.collection_list.count()} Items angezeigt")
             
             # Stelle Selection wieder her wenn möglich
             if current_row >= 0 and current_row < self.collection_list.count():
@@ -2074,11 +2074,11 @@ class StickerApp(QMainWindow):
                     
                 self.collection_list.addItem(text)
             else:
-                print(f"*** WARNUNG (sortiert): Item {idx} übersprungen (len={len(item)}) ***")
+                logger.warning(f"Item {idx} übersprungen (sortiert, len={len(item)})")
                 skipped_items += 1
         
         if skipped_items > 0:
-            print(f"*** TOTAL (sortiert): {skipped_items} Items übersprungen, {self.collection_list.count()} Items angezeigt ***")
+            logger.debug(f"TOTAL (sortiert): {skipped_items} Items übersprungen, {self.collection_list.count()} Items angezeigt")
         
         # Stelle Selection wieder her wenn möglich
         if current_row >= 0 and current_row < self.collection_list.count():
@@ -2557,23 +2557,17 @@ class StickerApp(QMainWindow):
             
             # QR-Path aus full_info extrahieren (Index 5)
             qr_path = ""
-            print(f"*** DEBUG EQUIPMENT MANAGER: Item length={len(item)} ***")
-            print(f"*** DEBUG EQUIPMENT MANAGER: Item structure: {[type(x).__name__ for x in item]} ***")
             logger.info(f"DEBUG: Item length={len(item)}, full item structure: {[type(x).__name__ for x in item]}")
             if len(item) > 5:
                 full_info = item[5]
-                print(f"*** DEBUG EQUIPMENT MANAGER: full_info type={type(full_info)}, value={full_info} ***")
-                logger.info(f"DEBUG: full_info type={type(full_info)}, value={full_info}")
+                logger.info(f"full_info type={type(full_info)}, value={full_info}")
                 if isinstance(full_info, dict):
                     qr_path = full_info.get("qr_path", "")
-                    print(f"*** DEBUG EQUIPMENT MANAGER: Extracted qr_path from dict={qr_path} ***")
-                    logger.info(f"DEBUG: Extracted qr_path from dict={qr_path}")
+                    logger.info(f"Extracted qr_path from dict={qr_path}")
                 else:
-                    print(f"*** DEBUG EQUIPMENT MANAGER: full_info is NOT a dict! ***")
-                    logger.warning(f"DEBUG: full_info is not a dict, it's {type(full_info)}, value={full_info}")
+                    logger.warning(f"full_info is not a dict, it's {type(full_info)}, value={full_info}")
             else:
-                print(f"*** DEBUG EQUIPMENT MANAGER: Item too short! ***")
-                logger.warning(f"DEBUG: Item too short, len={len(item)}, expected at least 6")
+                logger.warning(f"Item too short, len={len(item)}, expected at least 6")
 
             # COUNT-Sticker nicht übernehmen
             is_count_single = (len(item) >= 6 and item[5] == "count_single") or (str(symbol_type) == "COUNT_SINGLE")
@@ -4730,7 +4724,7 @@ class StickerApp(QMainWindow):
 
                 qr_path = it.get("qr_path", "")
                 sticker_config = it.get("sticker_config", {})
-                print(f"*** DEBUG: Füge Equipment hinzu: name={equipment_name}, qr_path={qr_path} ***")
+                logger.debug(f"Füge Equipment hinzu: name={equipment_name}, qr_path={qr_path}")
                 added = equipment_manager.add_equipment(
                     location, system, equipment_name,
                     energy_id=energy_id,

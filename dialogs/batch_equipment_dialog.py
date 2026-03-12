@@ -3,6 +3,7 @@ Batch Equipment Dialog - Tabellen-Eingabe wie in Excel/Sheets
 Ermöglicht das Hinzufügen mehrerer Equipments auf einmal
 """
 
+import logging
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QComboBox, QPushButton, QFrame, QTableWidget, QTableWidgetItem,
@@ -29,6 +30,8 @@ from ui.input_standards import (
     TABLE_HEADER_BG, TABLE_HEADER_COLOR, TABLE_GRID_COLOR,
     validate_input_params
 )
+
+logger = logging.getLogger(__name__)
 
 
 class BatchEquipmentDialog(QDialog):
@@ -65,7 +68,7 @@ class BatchEquipmentDialog(QDialog):
         # Validiere Parameter vor dem Erstellen
         warnings = validate_input_params(row_height=MIN_TABLE_ROW_HEIGHT)
         if warnings:
-            print("⚠️ UI Standards Check:", warnings)
+            logger.warning(" UI Standards Check:", warnings)
         
         self._build_ui()
         
@@ -855,7 +858,7 @@ class BatchEquipmentDialog(QDialog):
             self._update_sticker_preview()
             
         except Exception as e:
-            print(f"Fehler beim Laden des Presets: {e}")
+            logger.error(f"Fehler beim Laden des Presets: {e}")
     
     def _on_table_cell_changed(self, row, column):
         """Tabellenzelle geändert - Vorschau aktualisieren wenn erste Zeile."""
@@ -917,7 +920,7 @@ class BatchEquipmentDialog(QDialog):
             else:
                 lines = [energy_id, equipment_name]
             
-            print(f"*** PREVIEW DEBUG: lines={lines} ***")
+            logger.debug(f" PREVIEW DEBUG: lines={lines}")
             
             # QR-Code temporär in Konfiguration setzen
             original_qr_enabled = getattr(self.sticker_config, 'qr_mode_enabled', False)
@@ -954,7 +957,7 @@ class BatchEquipmentDialog(QDialog):
             self.sticker_preview_label.setPixmap(scaled_pixmap)
             
         except Exception as e:
-            print(f"Sticker-Vorschau-Fehler: {e}")
+            logger.error(f"Sticker-Vorschau-Fehler: {e}")
             import traceback
             traceback.print_exc()
             self.sticker_preview_label.setText(f"Fehler: {e}")

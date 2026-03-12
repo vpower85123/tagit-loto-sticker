@@ -1675,7 +1675,7 @@ def build_export_tab(self):
     zip_btn.setMaximumWidth(300)
     zip_btn.setMinimumHeight(36)
     zip_btn.setMaximumHeight(36)
-    zip_btn.clicked.connect(lambda: print("ZIP Export noch nicht implementiert"))
+    zip_btn.clicked.connect(lambda: None)  # TODO: ZIP Export implementieren
     buttons_layout.addWidget(zip_btn)
 
     right_card_layout.addWidget(buttons_container)

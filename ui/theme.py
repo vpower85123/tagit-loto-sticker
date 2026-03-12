@@ -27,7 +27,7 @@ def detect_system_dark_mode() -> bool:
         key = winreg.OpenKey(registry, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
         value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
         return value == 0
-    except:
+    except Exception:
         # Fallback: Qt Palette prüfen
         app = cast(QApplication, QApplication.instance())
         if app:
@@ -167,7 +167,7 @@ def get_contrasting_text_color(hex_color: str) -> str:
             return "#000000" # Dunkler Text auf hellem Grund
         else:
             return "#ffffff" # Heller Text auf dunklem Grund
-    except:
+    except Exception:
         return "#000000" # Fallback
 
 

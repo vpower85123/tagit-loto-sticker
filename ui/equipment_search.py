@@ -3,6 +3,7 @@ Equipment Search Widget
 Suchfeld für Equipment mit Auto-Complete
 """
 
+import logging
 from typing import List, Dict
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, 
@@ -13,6 +14,8 @@ from PyQt6.QtGui import QIcon
 import qtawesome as qta
 
 from services import EquipmentService
+
+logger = logging.getLogger(__name__)
 
 
 class EquipmentSearchWidget(QWidget):
