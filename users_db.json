@@ -1,0 +1,15 @@
+{
+    "admin": {
+        "password_hash": "5cac8151cc0a66260effd13de56a6c5c5cad7bedbce9030d616dd040d9bacb20",
+        "license_key": "IXK4-AB6T-W6NY-N5N0",
+        "activation_date": "2026-01-03T01:36:12.666485",
+        "expiry_date": "2099-12-31T23:59:59.999999"
+    },
+    "v_esterlein@hotmail.com": {
+        "password_hash": "f2efcfddd5a139252d8c9c17f0c82f098c74b67a5e4ef01da284f318e76f9151",
+        "license_key": "016D-3TMH-ML5Q-9357",
+        "activation_date": "2026-01-09T00:15:16.385108",
+        "expiry_date": "2027-01-09T00:15:16.385108",
+        "duration_days": 365
+    }
+}

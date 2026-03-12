@@ -1,0 +1,14 @@
+{
+  "border_radius": 18.0,
+  "border_width": 0.0,
+  "glow_intensity": 2.0,
+  "hover_lift": 2.0,
+  "press_offset": 1.0,
+  "animation_duration": 195,
+  "min_height": 50,
+  "font_size": 14,
+  "light_glow_color": "#000000",
+  "light_border_color": "#FFFFFF",
+  "light_text_color": "#ffffff",
+  "light_bg_alpha": 40
+}

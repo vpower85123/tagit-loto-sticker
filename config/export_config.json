@@ -1,0 +1,20 @@
+{
+  "sheet_width_mm": 210,
+  "sheet_height_mm": 297,
+  "orientation_mode": "custom",
+  "margin_mm": 5.0,
+  "gap_mm": 5.0,
+  "min_scale": 0.8,
+  "exact_three_rows": false,
+  "include_count_header": true,
+  "export_mode": "multi",
+  "roll_mode": true,
+  "roll_width_mm": 345.0,
+  "max_columns": null,
+  "max_rows": null,
+  "force_rows": null,
+  "force_cols": null,
+  "sticker_rotate_mode": "auto",
+  "sticker_rotation_locked": null,
+  "auto_height": false
+}
