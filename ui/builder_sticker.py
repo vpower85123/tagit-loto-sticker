@@ -120,12 +120,12 @@ def build_sticker_tab(self):
     input_card_content.setStyleSheet("QWidget { background-color: transparent; }")
 
     card_layout = QVBoxLayout(input_card_content)
-    card_layout.setContentsMargins(12, 4, 12, 8)
-    card_layout.setSpacing(6)
+    card_layout.setContentsMargins(14, 10, 14, 10)
+    card_layout.setSpacing(10)
 
     input_layout = QVBoxLayout()
-    input_layout.setSpacing(20)
-    input_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    input_layout.setSpacing(12)
+    input_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
     card_layout.addLayout(input_layout)
     
     # Modern Styling
@@ -342,7 +342,7 @@ def build_sticker_tab(self):
     loto_mode_container.setMaximumWidth(480)
     loto_mode_layout = QHBoxLayout(loto_mode_container)
     loto_mode_layout.setContentsMargins(0, 0, 0, 0)
-    loto_mode_layout.setSpacing(15)
+    loto_mode_layout.setSpacing(10)
 
     self.single_loto_radio = QRadioButton("Single LOTO")
     self.multi_loto_radio = QRadioButton("Multi LOTO")
@@ -364,8 +364,8 @@ def build_sticker_tab(self):
             color: {radio_text_color};
             font-size: 13px;
             font-weight: 400;
-            spacing: 10px;
-            padding: 6px 12px;
+            spacing: 8px;
+            padding: 4px 10px;
         }}
         QRadioButton::indicator {{
             width: 16px;
@@ -431,9 +431,28 @@ def build_sticker_tab(self):
 
     pdf_import_btn = self.create_wave_button("Sticker aus PDF importieren")
     pdf_import_btn.setIcon(create_symbol_icon("pdf_extractor", size=20))
-    pdf_import_btn.setMinimumHeight(52)
+    pdf_import_btn.setMinimumHeight(46)
     pdf_import_btn.setMinimumWidth(320)
     pdf_import_btn.setMaximumWidth(480)
+    pdf_import_btn.setStyleSheet(
+        f"""
+        QPushButton {{
+            border: 1px solid {border_color};
+            border-radius: 12px;
+            background-color: #ffffff;
+            color: {fg_color};
+            font-weight: 600;
+            padding: 8px 14px;
+        }}
+        QPushButton:hover {{
+            border-color: {focus_color};
+            background-color: {hover_bg};
+        }}
+        QPushButton:pressed {{
+            background-color: {hover_bg};
+        }}
+        """
+    )
     pdf_import_btn.clicked.connect(self.import_stickers_from_pdf)
     advanced_options_layout.addWidget(pdf_import_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -444,13 +463,31 @@ def build_sticker_tab(self):
     btn_container.setStyleSheet("QWidget { background-color: transparent; }")
     btn_layout = QVBoxLayout(btn_container)
     btn_layout.setContentsMargins(0, 0, 0, 0)
-    btn_layout.setSpacing(8)
+    btn_layout.setSpacing(10)
 
     add_btn = self.create_wave_button("Zur Sammlung hinzufügen")
     add_btn.setIcon(create_symbol_icon("plus", size=22))
-    add_btn.setMinimumHeight(52)
+    add_btn.setMinimumHeight(50)
     add_btn.setMinimumWidth(320)
     add_btn.setMaximumWidth(480)
+    add_btn.setStyleSheet(
+        f"""
+        QPushButton {{
+            border: none;
+            border-radius: 13px;
+            background-color: {focus_color};
+            color: #ffffff;
+            font-weight: 700;
+            padding: 10px 16px;
+        }}
+        QPushButton:hover {{
+            background-color: #2e86c9;
+        }}
+        QPushButton:pressed {{
+            background-color: #246fa7;
+        }}
+        """
+    )
     add_btn.clicked.connect(lambda: self.add_to_collection(auto_add_count=True))
     btn_layout.addWidget(add_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -458,6 +495,7 @@ def build_sticker_tab(self):
 
     micro_hint = QLabel("Tipp: Nutze Equipment-Vorlagen, um technische Serien schneller zu erfassen.")
     micro_hint.setStyleSheet(f"color: {tertiary_text}; font-size: 9px;")
+    micro_hint.setContentsMargins(0, 4, 0, 0)
     card_layout.addWidget(micro_hint, alignment=Qt.AlignmentFlag.AlignCenter)
 
     # Erstelle CollapsibleSection für Input Card
