@@ -176,6 +176,77 @@ class PreviewController:
             logger.error(f"Vorschau-Fehler: {e}")
             if self.preview_label:
                 self.preview_label.setText(f"Vorschau-Fehler:\n{e}")
+
+    def safe_update_count_preview(self):
+        """Sichere Count-Vorschau-Aktualisierung (für externe Aufrufe)."""
+        try:
+            self.update_count_preview()
+        except Exception as e:
+            logger.error(f"Fehler bei safe_update_count_preview: {e}")
+
+    def update_count_preview(self):
+        """Count-Sticker-Vorschau aktualisieren."""
+        from PyQt6.QtGui import QPixmap
+        from PyQt6.QtCore import Qt
+        from PIL.ImageQt import ImageQt
+
+        app = self.parent
+        if app is None:
+            return
+
+        try:
+            # Zähle nur reguläre Items (keine COUNT-Sticker)
+            regular_items = [
+                it for it in app.collection
+                if not (app._is_count_single(it) or app._is_count_multi(it))
+            ]
+            actual_count = len(regular_items)
+
+            if actual_count == 0:
+                actual_count = 1  # Mindestens 1 für Vorschau
+                detail = "Beispiel Equipment"
+            else:
+                # Details aus Collection extrahieren - in Reihenfolge
+                detail_parts = []
+                for item in regular_items:
+                    e_id = item[2] if len(item) > 2 else ""
+                    equip = item[3] if len(item) > 3 else ""
+                    if e_id and equip:
+                        detail_parts.append(f"{e_id} {equip}")
+                    elif e_id:
+                        detail_parts.append(e_id)
+                    elif equip:
+                        detail_parts.append(equip)
+
+                import re as _re_sort
+                detail_parts.sort(
+                    key=lambda s: [
+                        int(t) if t.isdigit() else t.lower()
+                        for t in _re_sort.split(r'(\d+)', s)
+                    ]
+                )
+                detail = ", ".join(detail_parts)
+
+            # Count-Sticker generieren
+            preview_img = app.count_generator.generate(detail=detail, count=actual_count)
+
+            # Bild zu QPixmap konvertieren
+            if preview_img.mode != 'RGBA':
+                preview_img = preview_img.convert('RGBA')
+            qimage = ImageQt(preview_img)
+            pixmap = QPixmap.fromImage(qimage)
+
+            # Vorschau im Hauptfenster aktualisieren
+            if hasattr(app, 'preview_label') and app.preview_label:
+                scaled_pixmap = pixmap.scaled(
+                    800,
+                    600,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+                app.preview_label.setPixmap(scaled_pixmap)
+        except Exception as e:
+            logger.error(f"Count-Vorschau-Fehler: {e}", exc_info=True)
     
     def queue_preview_update(self, delay: Optional[int] = None):
         """Starte ein verzögertes Vorschau-Update"""

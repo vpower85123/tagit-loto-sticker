@@ -867,66 +867,11 @@ class StickerApp(QMainWindow):
     
     def safe_update_count_preview(self):
         """Sichere Count-Vorschau-Aktualisierung (f├╝r externe Aufrufe)"""
-        try:
-            self.update_count_preview()
-        except Exception as e:
-            logger.error(f"Fehler bei safe_update_count_preview: {e}")
+        self.preview_controller.safe_update_count_preview()
     
     def update_count_preview(self):
         """Count-Sticker-Vorschau aktualisieren"""
-        from PyQt6.QtGui import QPixmap
-        from PyQt6.QtCore import Qt
-        from PIL.ImageQt import ImageQt
-        
-        try:
-            # Z├ñhle nur regul├ñre Items (keine COUNT-Sticker)
-            regular_items = [it for it in self.collection 
-                           if not (self._is_count_single(it) or self._is_count_multi(it))]
-            actual_count = len(regular_items)
-            
-            if actual_count == 0:
-                actual_count = 1  # Mindestens 1 f├╝r Vorschau
-                detail = "Beispiel Equipment"
-            else:
-                # Details aus Collection extrahieren - in Reihenfolge!
-                detail_parts = []
-                for item in regular_items:
-                    e_id = item[2] if len(item) > 2 else ""
-                    equip = item[3] if len(item) > 3 else ""
-                    # Kombiniere Energy-ID und Equipment-Name
-                    if e_id and equip:
-                        detail_parts.append(f"{e_id} {equip}")
-                    elif e_id:
-                        detail_parts.append(e_id)
-                    elif equip:
-                        detail_parts.append(equip)
-                
-                import re as _re_sort
-                detail_parts.sort(key=lambda s: [int(t) if t.isdigit() else t.lower() for t in _re_sort.split(r'(\d+)', s)])
-                # Als komma-separierte Liste f├╝r Count-Sticker
-                detail = ", ".join(detail_parts)
-            
-            # Count-Sticker generieren mit aktuellem Generator
-            preview_img = self.count_generator.generate(detail=detail, count=actual_count)
-            
-            # Bild zu QPixmap konvertieren
-            if preview_img.mode != 'RGBA':
-                preview_img = preview_img.convert('RGBA')
-            qimage = ImageQt(preview_img)
-            pixmap = QPixmap.fromImage(qimage)
-            
-            # Vorschau im Hauptfenster aktualisieren
-            if hasattr(self, 'preview_label'):
-                scaled_pixmap = pixmap.scaled(
-                    800, 600,
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation
-                )
-                self.preview_label.setPixmap(scaled_pixmap)
-        except Exception as e:
-            logger.error(f"Count-Vorschau-Fehler: {e}")
-            import traceback
-            traceback.print_exc()
+        self.preview_controller.update_count_preview()
     
     def increase_sticker_scale(self):
         """Sticker-Skalierung erh├Âhen - delegiert an Preview Controller"""
