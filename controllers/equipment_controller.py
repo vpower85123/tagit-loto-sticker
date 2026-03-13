@@ -996,9 +996,10 @@ class EquipmentController(QObject):
         if not has_count:
             return True
         
-        from PyQt6.QtWidgets import QSpinBox, QVBoxLayout, QHBoxLayout, QLabel, QDialogButtonBox
+        from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QDialogButtonBox
         from ui.glass_button import GlassGlowButton
         from ui.theme import create_dialog_stylesheet, get_theme_colors, Theme
+        from ui.spinboxes import StyledSpinBox
         
         colors = get_theme_colors(Theme.LIGHT)
         dialog = QDialog(self.parent_app)
@@ -1015,10 +1016,12 @@ class EquipmentController(QObject):
         label.setWordWrap(True)
         layout.addWidget(label)
         
-        spin = QSpinBox()
+        spin = StyledSpinBox()
         spin.setRange(1, 50)
         spin.setValue(1)
-        spin.setStyleSheet(f"padding: 6px; background: {colors['input_bg']}; color: {colors['fg']}; border: 1px solid {colors['border']}; border-radius: 4px;")
+        spin.setStyleSheet(
+            f"padding: 6px; background: {colors['input_bg']}; color: {colors['fg']}; border: 1px solid {colors['border']}; border-radius: 6px;"
+        )
         layout.addWidget(spin)
         
         btn_layout = QHBoxLayout()
@@ -1086,10 +1089,11 @@ class EquipmentController(QObject):
         if len(count_entries) <= 1:
             return self._ask_count_copies()
         
-        from PyQt6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QSpinBox,
+        from PyQt6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel,
                                       QCheckBox, QScrollArea, QWidget, QFrame)
         from ui.glass_button import GlassGlowButton
         from ui.theme import create_dialog_stylesheet, get_theme_colors, Theme
+        from ui.spinboxes import StyledSpinBox
         
         colors = get_theme_colors(Theme.LIGHT)
         dialog = QDialog(self.parent_app)
@@ -1144,7 +1148,7 @@ class EquipmentController(QObject):
             copies_lbl.setStyleSheet(f"color: {colors['fg']}; font-size: 12px; border: none;")
             row_layout.addWidget(copies_lbl)
             
-            spin = QSpinBox()
+            spin = StyledSpinBox()
             spin.setRange(1, 50)
             spin.setValue(entry['copies'])
             spin.setFixedWidth(60)
