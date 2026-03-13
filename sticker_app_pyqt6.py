@@ -995,31 +995,7 @@ class StickerApp(QMainWindow):
         Args:
             mode_or_bool: Entweder ein String ('single', 'multi', 'none') oder ein Boolean (f├╝r R├╝ckw├ñrtskompatibilit├ñt)
         """
-        # R├╝ckw├ñrtskompatibilit├ñt: Boolean zu String konvertieren
-        if isinstance(mode_or_bool, bool):
-            mode = 'multi' if mode_or_bool else 'single'
-        else:
-            mode = mode_or_bool  # 'single', 'multi', oder 'none'
-        
-        previous_mode = getattr(self, 'current_loto_mode', None)
-        self.current_loto_mode = mode
-
-        if getattr(self, 'count_mode', None):
-            try:
-                self.count_mode.set(mode)
-            except Exception:
-                self.count_mode = _CountModeProxy(mode)
-        else:
-            self.count_mode = _CountModeProxy(mode)
-
-        if getattr(self, 'export_config', None):
-            self.export_config.export_mode = mode
-            # IMMER speichern wenn Modus ge├ñndert wird (nicht nur wenn anders als previous)
-            try:
-                self.config_manager.save_export(self.export_config)
-                logger.info(f"LOTO Modus gespeichert: {mode}")
-            except Exception as exc:
-                logger.warning(f"Export-Config konnte nicht gespeichert werden (LOTO Modus): {exc}")
+        self.settings_controller.on_loto_mode_changed(mode_or_bool)
     
     # === Export-Helper-Funktionen ===
     

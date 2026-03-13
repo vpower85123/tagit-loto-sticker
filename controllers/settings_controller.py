@@ -170,3 +170,53 @@ class SettingsController:
                 
         except Exception as e:
             logger.error(f"Fehler beim Speichern und Aktualisieren: {e}")
+
+    def on_loto_mode_changed(self, mode_or_bool):
+        """Synchronisiert LOTO-Modus mit Export-Konfiguration und Legacy-State."""
+        if not self.parent:
+            return
+
+        # Rückwärtskompatibilität: Boolean zu String konvertieren
+        if isinstance(mode_or_bool, bool):
+            mode = 'multi' if mode_or_bool else 'single'
+        else:
+            mode = mode_or_bool  # 'single', 'multi', oder 'none'
+
+        self.parent.current_loto_mode = mode
+
+        # Legacy-StringVar-ähnliches Objekt bedienen/fallbacken
+        if getattr(self.parent, 'count_mode', None):
+            try:
+                self.parent.count_mode.set(mode)
+            except Exception:
+                class _CountModeFallback:
+                    def __init__(self, value: str):
+                        self._value = value
+
+                    def get(self) -> str:
+                        return self._value
+
+                    def set(self, value: str) -> None:
+                        self._value = value
+
+                self.parent.count_mode = _CountModeFallback(mode)
+        else:
+            class _CountModeFallback:
+                def __init__(self, value: str):
+                    self._value = value
+
+                def get(self) -> str:
+                    return self._value
+
+                def set(self, value: str) -> None:
+                    self._value = value
+
+            self.parent.count_mode = _CountModeFallback(mode)
+
+        if getattr(self.parent, 'export_config', None):
+            self.parent.export_config.export_mode = mode
+            try:
+                self.config_manager.save_export(self.parent.export_config)
+                logger.info(f"LOTO Modus gespeichert: {mode}")
+            except Exception as exc:
+                logger.warning(f"Export-Config konnte nicht gespeichert werden (LOTO Modus): {exc}")
