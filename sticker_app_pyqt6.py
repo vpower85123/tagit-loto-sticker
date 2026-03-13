@@ -1267,121 +1267,14 @@ class StickerApp(QMainWindow):
             self.export_controller._update_roll_mode_visibility()
 
     def compute_auto_sheet_height(self, count_mode, regular_items, count_single_items, sheet_w_mm, header_h_mm=0.0):
-        """
-        Berechne automatische Seitenhöhe (mm), so dass ALLE Sticker auf EINE Seite passen.
-        Layout: (optional Header) -> Raster reguläre Sticker -> Raster Count-Sticker (single mode).
-        header_h_mm: Echte Header-Höhe in mm (optional, wird berechnet wenn nicht angegeben)
-        """
-        margin = self.export_config.margin_mm
-        gap = self.export_config.gap_mm
-
-        # Basis-Dimensionen
-        st_w = self.sticker_config.width_mm
-        st_h = self.sticker_config.height_mm
-
-        # Header (nur Multi)
-        header_block_h = 0.0
-        if count_mode == 'multi' and self.export_config.include_count_header and regular_items:
-            if header_h_mm > 0:
-                # Nutze die echte Header-Höhe wenn übergeben
-                header_block_h = header_h_mm + gap
-            else:
-                # Fallback: Approximation
-                header_block_h = self.count_config.height_mm + gap
-
-        # Rotation beurteilen (nur für reguläre Sticker)
-        rotate_mode = getattr(self.export_config, 'sticker_rotate_mode', 'none')
-        
-        def cols_for(w_s, h_s):
-            usable_w = sheet_w_mm - 2 * margin
-            return max(1, int((usable_w + gap) // (w_s + gap)))
-
-        if rotate_mode == 'always':
-            use_rot = True
-        elif rotate_mode == 'auto':
-            cols_norm = cols_for(st_w, st_h)
-            cols_rot = cols_for(st_h, st_w)
-            use_rot = cols_rot > cols_norm
-        else:
-            use_rot = False
-        
-        if use_rot:
-            st_w, st_h = st_h, st_w
-
-        # Reguläre Sticker Raster (nur im Multi-Modus!)
-        n_reg = len(regular_items)
-        cols_reg = cols_for(st_w, st_h)
-        rows_reg = math.ceil(n_reg / cols_reg) if n_reg else 0
-        reg_block_h = 0.0
-        
-        # Im Single-Modus werden reguläre Sticker mit Count-Stickern als Paare behandelt
-        if count_mode != 'single':
-            if rows_reg:
-                reg_block_h = rows_reg * st_h + (rows_reg - 1) * gap
-
-        # Count-Singles Block (nur single Mode)
-        count_block_h = 0.0
-        if count_mode == 'single':
-            # Single-Modus: identische Logik wie beim PDF-Export verwenden
-            ct_w_orig = self.count_config.width_mm
-            ct_h_orig = self.count_config.height_mm
-            count_copies = max(1, int(getattr(self.count_config, 'count_print_copies', 1)))
-            st_w_orig = st_w  # Nach Rotation aus oben
-            st_h_orig = st_h
-            usable_w = sheet_w_mm - 2 * margin
-            total_pairs = len(regular_items)
-
-            def evaluate(lo_rot: bool, ct_rot: bool):
-                loto_w = st_h_orig if lo_rot else st_w_orig
-                loto_h = st_w_orig if lo_rot else st_h_orig
-                count_w = ct_h_orig if ct_rot else ct_w_orig
-                count_h = ct_w_orig if ct_rot else ct_h_orig
-                pair_width_local = loto_w + gap + count_w
-                if usable_w <= 0:
-                    pairs_per_row_local = 1
-                else:
-                    pairs_per_row_local = max(1, int((usable_w + gap) // (pair_width_local + gap)))
-                rows_local = math.ceil(total_pairs / pairs_per_row_local) if total_pairs else 0
-                stacked_count_h = count_copies * (count_h + gap)
-                pair_height_local = max(loto_h, stacked_count_h)
-                total_height_local = rows_local * pair_height_local + max(rows_local - 1, 0) * gap
-                pairs_in_row = pairs_per_row_local if total_pairs >= pairs_per_row_local else (total_pairs or pairs_per_row_local)
-                width_used = pairs_in_row * pair_width_local + max(pairs_in_row - 1, 0) * gap
-                width_penalty = max(usable_w - width_used, 0.0)
-                rotation_penalty = 0 if lo_rot == ct_rot else 1
-                return (
-                    -pairs_per_row_local,
-                    width_penalty,
-                    rotation_penalty,
-                    total_height_local,
-                    total_height_local,
-                )
-
-            option_metrics = [
-                evaluate(False, False),
-                evaluate(True, True),
-                evaluate(True, False),
-                evaluate(False, True),
-            ]
-
-            # count_block_h entspricht total_height der besten Option (Index 4)
-            best_option = min(option_metrics, key=lambda item: item[:4])
-            count_block_h = best_option[4]
-            
-            # Im Single-Modus sind die regulären Sticker bereits in count_block_h enthalten
-            reg_block_h = 0.0
-        elif count_mode == 'single' and count_single_items:
-            ct_w = self.count_config.width_mm
-            ct_h = self.count_config.height_mm
-            usable_w = sheet_w_mm - 2 * margin
-            ct_cols = max(1, int((usable_w + gap) // (ct_w + gap)))
-            rows_ct = math.ceil(len(count_single_items) / ct_cols)
-            count_block_h = rows_ct * ct_h + (rows_ct - 1) * gap
-            if rows_reg:
-                count_block_h += gap  # Abstand zwischen regulär und Count
-
-        total_h = margin + header_block_h + reg_block_h + count_block_h + margin
-        return math.ceil(total_h + 0.0001)
+        """Berechnet automatische Seitenhöhe über den ExportController."""
+        return self.export_controller.compute_auto_sheet_height(
+            count_mode,
+            regular_items,
+            count_single_items,
+            sheet_w_mm,
+            header_h_mm=header_h_mm,
+        )
 
     # === Description Settings Management ===
     def load_description_settings(self):
