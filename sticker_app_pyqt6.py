@@ -898,19 +898,62 @@ class StickerApp(QMainWindow):
     
     def _apply_sticker_preset(self, preset_type: str):
         """Wendet ein Sticker-Preset an (Form)"""
-        self.preview_controller.apply_sticker_preset(preset_type)
+        controller = getattr(self, 'preview_controller', None)
+        if controller is not None:
+            controller.apply_sticker_preset(preset_type)
+            return
+
+        logger.warning("_apply_sticker_preset aufgerufen bevor preview_controller initialisiert ist")
     
     def _save_current_form_config(self):
         """Speichert die aktuellen Sticker-Einstellungen f├╝r die aktuelle Form"""
-        self.preview_controller.save_current_form_config()
+        controller = getattr(self, 'preview_controller', None)
+        if controller is not None:
+            controller.save_current_form_config()
+            return
+
+        # Fallback f├╝r fr├╝he __init__-Phase vor Controller-Initialisierung
+        if not hasattr(self, 'current_form_type') or not hasattr(self, 'form_configs'):
+            return
+
+        from dataclasses import replace
+        self.form_configs[self.current_form_type] = replace(self.sticker_config)
     
     def _load_form_config(self, form_type: str):
         """L├ñdt die gespeicherten Einstellungen f├╝r eine Form"""
-        self.preview_controller.load_form_config(form_type)
+        controller = getattr(self, 'preview_controller', None)
+        if controller is not None:
+            controller.load_form_config(form_type)
+            return
+
+        # Fallback f├╝r fr├╝he __init__-Phase vor Controller-Initialisierung
+        if not hasattr(self, 'form_configs') or form_type not in self.form_configs:
+            return
+
+        saved_config = self.form_configs[form_type]
+        if saved_config is None:
+            return
+
+        self.sticker_config.width_mm = saved_config.width_mm
+        self.sticker_config.height_mm = saved_config.height_mm
+        self.sticker_config.corner_radius = saved_config.corner_radius
+        self.sticker_config.dpi = saved_config.dpi
+        self.sticker_config.outline_width = saved_config.outline_width
+        self.sticker_config.font_size_mm = saved_config.font_size_mm
+        self.sticker_config.line_height_mm = saved_config.line_height_mm
+        self.sticker_config.symbol_size_mm = saved_config.symbol_size_mm
+        self.sticker_config.symbol_corner_radius = saved_config.symbol_corner_radius
+        self.sticker_config.sticker_color = saved_config.sticker_color
+        self.sticker_config.font_path = saved_config.font_path
     
     def _load_preset_by_index(self, preset_index: int):
         """L├ñdt ein gespeichertes Sticker-Preset nach Index (0, 1, 2) f├╝r Preset 1, 2, 3"""
-        self.preview_controller.load_preset_by_index(preset_index)
+        controller = getattr(self, 'preview_controller', None)
+        if controller is not None:
+            controller.load_preset_by_index(preset_index)
+            return
+
+        logger.warning("_load_preset_by_index aufgerufen bevor preview_controller initialisiert ist")
     
     # === Count-Funktionen (delegieren an Count Controller) ===
     
