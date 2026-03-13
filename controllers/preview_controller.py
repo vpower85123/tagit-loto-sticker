@@ -9,6 +9,7 @@ from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtGui import QPixmap
 from PIL import Image
 from PIL.ImageQt import ImageQt
+from dataclasses import replace
 
 logger = logging.getLogger(__name__)
 
@@ -334,3 +335,104 @@ class PreviewController:
             # Wert zurücksetzen auf Minimum (0.1 * 200 = 20)
             if self.scale_slider:
                 self.scale_slider.setValue(20)
+
+    def apply_sticker_preset(self, preset_type: str):
+        """Wendet ein Sticker-Preset an (Form)."""
+        app = self.parent
+        if app is None:
+            return
+
+        try:
+            # Speichere aktuelle Form-Einstellungen bevor wir wechseln
+            if hasattr(app, 'current_form_type') and app.current_form_type != preset_type:
+                self.save_current_form_config()
+
+            # Wenn wir bereits gespeicherte Einstellungen fuer diese Form haben, lade sie
+            if hasattr(app, 'form_configs') and app.form_configs.get(preset_type) is not None:
+                self.load_form_config(preset_type)
+                app.current_form_type = preset_type
+            else:
+                # Ansonsten verwende Standard-Preset-Werte
+                px_per_mm = app.sticker_config.dpi / 25.4
+
+                if preset_type == "rectangle":
+                    app.sticker_config.width_mm = 85.0
+                    app.sticker_config.height_mm = 25.0
+                    app.sticker_config.corner_radius = int(12.0 * px_per_mm)
+
+                elif preset_type == "square":
+                    app.sticker_config.width_mm = 85.0
+                    app.sticker_config.height_mm = 85.0
+                    app.sticker_config.corner_radius = int(20.0 * px_per_mm)
+
+                elif preset_type == "circle":
+                    size_mm = 70.0
+                    app.sticker_config.width_mm = size_mm
+                    app.sticker_config.height_mm = size_mm
+                    size_px = int(size_mm * px_per_mm)
+                    app.sticker_config.corner_radius = size_px // 2
+
+                elif preset_type == "rounded":
+                    app.sticker_config.width_mm = 85.0
+                    app.sticker_config.height_mm = 25.0
+                    app.sticker_config.corner_radius = int(5.0 * px_per_mm)
+
+                app.current_form_type = preset_type
+                self.save_current_form_config()
+
+            # Speichere Änderungen
+            app.config_manager.save(app.sticker_config, app.count_config, app.theme_config)
+
+            # Update Generator und Preview
+            from generators.sticker_generator import StickerGenerator
+            app.sticker_generator = StickerGenerator(app.sticker_config)
+            self.sticker_generator = app.sticker_generator
+            self.update_preview()
+
+            if getattr(app, 'status_bar', None):
+                app.status_bar.showMessage(f"Preset '{preset_type}' angewendet", 2000)
+
+        except Exception as e:
+            logger.error(f"Fehler beim Anwenden des Presets: {e}", exc_info=True)
+            if hasattr(app, '_create_styled_msgbox'):
+                msg = app._create_styled_msgbox(
+                    "Fehler",
+                    f"Preset konnte nicht angewendet werden: {e}",
+                )
+                msg.exec()
+
+    def save_current_form_config(self):
+        """Speichert die aktuellen Sticker-Einstellungen fuer die aktuelle Form."""
+        app = self.parent
+        if app is None:
+            return
+
+        if not hasattr(app, 'current_form_type') or not hasattr(app, 'form_configs'):
+            return
+
+        app.form_configs[app.current_form_type] = replace(app.sticker_config)
+
+    def load_form_config(self, form_type: str):
+        """Laedt die gespeicherten Einstellungen fuer eine Form."""
+        app = self.parent
+        if app is None:
+            return
+
+        if not hasattr(app, 'form_configs') or form_type not in app.form_configs:
+            return
+
+        saved_config = app.form_configs[form_type]
+        if saved_config is None:
+            return
+
+        app.sticker_config.width_mm = saved_config.width_mm
+        app.sticker_config.height_mm = saved_config.height_mm
+        app.sticker_config.corner_radius = saved_config.corner_radius
+        app.sticker_config.dpi = saved_config.dpi
+        app.sticker_config.outline_width = saved_config.outline_width
+        app.sticker_config.font_size_mm = saved_config.font_size_mm
+        app.sticker_config.line_height_mm = saved_config.line_height_mm
+        app.sticker_config.symbol_size_mm = saved_config.symbol_size_mm
+        app.sticker_config.symbol_corner_radius = saved_config.symbol_corner_radius
+        app.sticker_config.sticker_color = saved_config.sticker_color
+        app.sticker_config.font_path = saved_config.font_path

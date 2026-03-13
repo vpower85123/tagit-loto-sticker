@@ -899,98 +899,15 @@ class StickerApp(QMainWindow):
     
     def _apply_sticker_preset(self, preset_type: str):
         """Wendet ein Sticker-Preset an (Form)"""
-        try:
-            # Speichere aktuelle Form-Einstellungen bevor wir wechseln
-            if hasattr(self, 'current_form_type') and self.current_form_type != preset_type:
-                self._save_current_form_config()
-            
-            # Wenn wir bereits gespeicherte Einstellungen f├╝r diese Form haben, lade sie
-            if hasattr(self, 'form_configs') and self.form_configs.get(preset_type) is not None:
-                self._load_form_config(preset_type)
-                self.current_form_type = preset_type
-            else:
-                # Ansonsten verwende Standard-Preset-Werte
-                px_per_mm = self.sticker_config.dpi / 25.4
-                
-                if preset_type == "rectangle":
-                    # Rechteck: Standard LOTO-Format 85mm x 25mm mit stark abgerundeten Ecken
-                    self.sticker_config.width_mm = 85.0
-                    self.sticker_config.height_mm = 25.0
-                    # 12mm Eckenradius f├╝r sehr runden Look (fast halbe H├Âhe)
-                    self.sticker_config.corner_radius = int(12.0 * px_per_mm)
-                    
-                elif preset_type == "square":
-                    # Quadrat: 85mm x 85mm f├╝r bessere Lesbarkeit und Proportionen
-                    self.sticker_config.width_mm = 85.0
-                    self.sticker_config.height_mm = 85.0
-                    # Stark abgerundete Ecken (20mm) f├╝r sehr weichen Look
-                    self.sticker_config.corner_radius = int(20.0 * px_per_mm)
-                    
-                elif preset_type == "circle":
-                    # Kreis: 70mm Durchmesser f├╝r ausgewogene Gr├Â├ƒe
-                    size_mm = 70.0
-                    self.sticker_config.width_mm = size_mm
-                    self.sticker_config.height_mm = size_mm
-                    # Perfekter Kreis: Radius = halbe Breite in Pixel
-                    size_px = int(size_mm * px_per_mm)
-                    self.sticker_config.corner_radius = size_px // 2
-                    
-                elif preset_type == "rounded":
-                    # Abgerundetes Rechteck: 85mm x 25mm mit deutlichen Eckenradius
-                    self.sticker_config.width_mm = 85.0
-                    self.sticker_config.height_mm = 25.0
-                    # 5mm Eckenradius f├╝r abgerundetes Rechteck
-                    self.sticker_config.corner_radius = int(5.0 * px_per_mm)
-                
-                # Speichere diese neue Konfiguration f├╝r diese Form
-                self.current_form_type = preset_type
-                self._save_current_form_config()
-            
-            # Speichere die ├änderungen
-            self.config_manager.save(self.sticker_config, self.count_config, self.theme_config)
-            
-            # Update Generator und Preview
-            self.sticker_generator = StickerGenerator(self.sticker_config)
-            self.update_sticker_preview()
-            
-            if self.status_bar:
-                self.status_bar.showMessage(f"Preset '{preset_type}' angewendet", 2000)
-                
-        except Exception as e:
-            logger.error(f"Fehler beim Anwenden des Presets: {e}")
-            msg = self._create_styled_msgbox("Fehler", f"Preset konnte nicht angewendet werden: {e}", QMessageBox.Icon.Warning)
-            msg.exec()
+        self.preview_controller.apply_sticker_preset(preset_type)
     
     def _save_current_form_config(self):
         """Speichert die aktuellen Sticker-Einstellungen f├╝r die aktuelle Form"""
-        if not hasattr(self, 'current_form_type') or not hasattr(self, 'form_configs'):
-            return
-        
-        # Erstelle eine Kopie der relevanten Konfigurationswerte
-        from dataclasses import replace
-        self.form_configs[self.current_form_type] = replace(self.sticker_config)
+        self.preview_controller.save_current_form_config()
     
     def _load_form_config(self, form_type: str):
         """L├ñdt die gespeicherten Einstellungen f├╝r eine Form"""
-        if not hasattr(self, 'form_configs') or form_type not in self.form_configs:
-            return
-        
-        saved_config = self.form_configs[form_type]
-        if saved_config is None:
-            return
-        
-        # ├£bertrage die gespeicherten Werte
-        self.sticker_config.width_mm = saved_config.width_mm
-        self.sticker_config.height_mm = saved_config.height_mm
-        self.sticker_config.corner_radius = saved_config.corner_radius
-        self.sticker_config.dpi = saved_config.dpi
-        self.sticker_config.outline_width = saved_config.outline_width
-        self.sticker_config.font_size_mm = saved_config.font_size_mm
-        self.sticker_config.line_height_mm = saved_config.line_height_mm
-        self.sticker_config.symbol_size_mm = saved_config.symbol_size_mm
-        self.sticker_config.symbol_corner_radius = saved_config.symbol_corner_radius
-        self.sticker_config.sticker_color = saved_config.sticker_color
-        self.sticker_config.font_path = saved_config.font_path
+        self.preview_controller.load_form_config(form_type)
     
     def _load_preset_by_index(self, preset_index: int):
         """L├ñdt ein gespeichertes Sticker-Preset nach Index (0, 1, 2) f├╝r Preset 1, 2, 3"""
