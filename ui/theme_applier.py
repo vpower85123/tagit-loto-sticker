@@ -43,30 +43,6 @@ def apply_main_window_theme(window) -> None:
             border-top: 6px solid #64748b;
             margin-right: 8px;
         }}
-        QAbstractSpinBox::up-button, QAbstractSpinBox::down-button {{
-            width: 22px;
-            border-left: 1px solid {colors['border']};
-            background-color: rgba(255, 255, 255, 0.7);
-        }}
-        QAbstractSpinBox::up-button:hover, QAbstractSpinBox::down-button:hover {{
-            background-color: {colors['hover']};
-        }}
-        QAbstractSpinBox::up-arrow {{
-            image: none;
-            width: 0px;
-            height: 0px;
-            border-left: 4px solid transparent;
-            border-right: 4px solid transparent;
-            border-bottom: 6px solid #64748b;
-        }}
-        QAbstractSpinBox::down-arrow {{
-            image: none;
-            width: 0px;
-            height: 0px;
-            border-left: 4px solid transparent;
-            border-right: 4px solid transparent;
-            border-top: 6px solid #64748b;
-        }}
         QMenuBar {{
             background-color: {colors['bg']};
             color: {colors['fg']};

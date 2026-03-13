@@ -170,7 +170,9 @@ def build_export_tab(self):
             spin.setValue(value)
             spin.setSingleStep(step)
         
-        spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.UpDownArrows)
+        # StyledSpinBox/StyledDoubleSpinBox rendern eigene Pfeile.
+        # Native UpDownArrows wuerden zu doppelten/defekten Pfeilen fuehren.
+        spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
         spin.setFixedWidth(SPINBOX_INPUT_WIDTH)
         
         def on_spin_change(val):
