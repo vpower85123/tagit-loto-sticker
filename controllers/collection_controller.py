@@ -20,6 +20,7 @@ from PyQt6.QtGui import QAction, QPixmap
 
 from PIL import Image, ImageQt
 import qtawesome as qta
+from ui.spinboxes import StyledSpinBox
 
 if TYPE_CHECKING:
     from sticker_app_pyqt6 import StickerApp
@@ -956,11 +957,6 @@ class CollectionController(QObject):
             dialog.setStyleSheet("""
                 QDialog { background-color: #ffffff; }
                 QLabel { color: #000000; }
-                QSpinBox {
-                    border: 1px solid #cccccc; border-radius: 4px;
-                    padding: 4px; background-color: #ffffff; color: #000000;
-                    selection-background-color: #0078d4;
-                }
                 QPushButton {
                     border: 1px solid #cccccc; border-radius: 4px;
                     padding: 4px 12px; background-color: #f0f0f0; color: #000000;
@@ -973,7 +969,8 @@ class CollectionController(QObject):
             label = QLabel("Anzahl Kopien zum Exportieren:")
             layout.addWidget(label)
 
-            spinbox = QSpinBox()
+            # Nutze zentrale StyledSpinBox mit stabilen Custom-Pfeilen
+            spinbox = StyledSpinBox()
             spinbox.setMinimum(1)
             spinbox.setMaximum(999)
             spinbox.setValue(current_copies)
