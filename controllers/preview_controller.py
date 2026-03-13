@@ -436,3 +436,74 @@ class PreviewController:
         app.sticker_config.symbol_corner_radius = saved_config.symbol_corner_radius
         app.sticker_config.sticker_color = saved_config.sticker_color
         app.sticker_config.font_path = saved_config.font_path
+
+    def load_preset_by_index(self, preset_index: int):
+        """Laedt ein gespeichertes Sticker-Preset nach Index (0, 1, 2)."""
+        app = self.parent
+        if app is None:
+            return
+
+        try:
+            import json
+            from core.paths import get_config_path
+            from generators.sticker_generator import StickerGenerator
+
+            config_path = get_config_path("config.json")
+            if not config_path.exists():
+                logger.warning("config.json nicht gefunden")
+                return
+
+            with open(config_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            presets = data.get("sticker_presets", []) or []
+            if not isinstance(presets, list) or preset_index >= len(presets):
+                logger.warning(f"Preset {preset_index + 1} nicht gefunden")
+                return
+
+            preset = presets[preset_index]
+            if not preset:
+                logger.warning(f"Preset {preset_index + 1} ist leer")
+                return
+
+            # Preset-Werte anwenden
+            if "width_mm" in preset:
+                app.sticker_config.width_mm = float(preset["width_mm"])
+            if "height_mm" in preset:
+                app.sticker_config.height_mm = float(preset["height_mm"])
+            if "dpi" in preset:
+                app.sticker_config.dpi = int(preset["dpi"])
+            if "corner_radius" in preset:
+                app.sticker_config.corner_radius = int(preset["corner_radius"])
+            if "outline_width" in preset:
+                app.sticker_config.outline_width = int(preset["outline_width"])
+            if "font_size_mm" in preset:
+                app.sticker_config.font_size_mm = float(preset["font_size_mm"])
+            if "line_height_mm" in preset:
+                app.sticker_config.line_height_mm = float(preset["line_height_mm"])
+            if "symbol_size_mm" in preset:
+                app.sticker_config.symbol_size_mm = float(preset["symbol_size_mm"])
+            if "symbol_corner_radius" in preset:
+                app.sticker_config.symbol_corner_radius = int(preset["symbol_corner_radius"])
+            if "symbol_offset_x_mm" in preset:
+                app.sticker_config.symbol_offset_x_mm = float(preset["symbol_offset_x_mm"])
+            if "symbol_offset_y_mm" in preset:
+                app.sticker_config.symbol_offset_y_mm = float(preset["symbol_offset_y_mm"])
+            if "sticker_color" in preset:
+                app.sticker_config.sticker_color = preset["sticker_color"]
+            if "font_path" in preset:
+                app.sticker_config.font_path = preset["font_path"]
+
+            # Speichere und aktualisiere
+            app.config_manager.save(app.sticker_config, app.count_config, app.theme_config)
+            app.sticker_generator = StickerGenerator(app.sticker_config)
+            self.sticker_generator = app.sticker_generator
+            self.update_preview()
+
+            if getattr(app, 'status_bar', None):
+                app.status_bar.showMessage(f"Preset {preset_index + 1} geladen", 2000)
+
+            logger.info(f"Preset {preset_index + 1} erfolgreich geladen")
+
+        except Exception as e:
+            logger.error(f"Fehler beim Laden des Presets: {e}", exc_info=True)
