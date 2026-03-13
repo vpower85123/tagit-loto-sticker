@@ -1,9 +1,12 @@
 """
 Settings Controller - Verwaltet Dialog- und Konfigurations-Management
 """
+import json
 import logging
 from typing import Optional, Any
 from PyQt6.QtWidgets import QWidget, QDialog, QMessageBox
+from PyQt6.QtCore import QSize
+import qtawesome as qta
 
 logger = logging.getLogger(__name__)
 
@@ -220,3 +223,93 @@ class SettingsController:
                 logger.info(f"LOTO Modus gespeichert: {mode}")
             except Exception as exc:
                 logger.warning(f"Export-Config konnte nicht gespeichert werden (LOTO Modus): {exc}")
+
+    def load_description_settings(self):
+        """Lädt gespeicherte Description-Einstellungen aus JSON."""
+        if not self.parent:
+            return '', False
+
+        try:
+            if self.parent.description_settings_path.exists():
+                with open(self.parent.description_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    return settings.get('description', ''), settings.get('is_locked', False)
+        except Exception as e:
+            logger.warning(f"Description-Einstellungen konnten nicht geladen werden: {e}")
+        return '', False
+
+    def save_description_settings(self, description: str, is_locked: bool):
+        """Speichert Description-Einstellungen persistent."""
+        if not self.parent:
+            return
+
+        try:
+            self.parent.description_settings_path.parent.mkdir(parents=True, exist_ok=True)
+            settings = {
+                'description': description,
+                'is_locked': is_locked,
+            }
+            with open(self.parent.description_settings_path, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.error(f"Description-Einstellungen speichern fehlgeschlagen: {e}")
+
+    def load_description_settings_on_startup(self):
+        """Wendet gespeicherte Description/Lock-Einstellungen nach Startup auf UI an."""
+        if not self.parent:
+            return
+
+        try:
+            saved_description, is_locked = self.load_description_settings()
+            self.parent._saved_description = saved_description
+            self.parent._saved_description_locked = is_locked
+
+            if saved_description and is_locked and hasattr(self.parent, 'description_lock_btn'):
+                self.parent.description_lock_btn.setIcon(qta.icon('ph.lock', color='#856404'))
+                self.parent.description_lock_btn.setIconSize(QSize(20, 20))
+                self.parent.description_lock_btn.setStyleSheet(
+                    """
+                    QPushButton {
+                        border: 1px solid #ffeeba;
+                        border-radius: 18px;
+                        background-color: #fff3cd;
+                    }
+                    QPushButton:hover { background-color: #ffe8a1; }
+                    """
+                )
+                self.parent.description_is_locked = True
+
+                if hasattr(self.parent, 'description_entry'):
+                    self.parent.description_entry.setText("")
+                    self.parent.description_entry.setReadOnly(True)
+                    try:
+                        custom_colors = getattr(self.parent.theme_config, 'custom_colors', {}) if hasattr(self.parent, 'theme_config') else {}
+                        input_bg = custom_colors.get('input_bg', '#f8f9fa')
+                        input_fg = custom_colors.get('input_fg', '#2c3e50')
+                        border_color = custom_colors.get('border', '#dce1e6')
+                        focus_color = custom_colors.get('accent', '#3498db')
+                        base_style = f"""
+                            QLineEdit {{
+                                border: 1px solid {border_color};
+                                border-radius: 6px;
+                                padding: 6px 10px;
+                                background-color: {input_bg};
+                                color: {input_fg};
+                                font-size: 13px;
+                            }}
+                            QLineEdit:focus {{
+                                border: 1px solid {focus_color};
+                                background-color: #ffffff;
+                            }}
+                            QLineEdit:disabled {{
+                                background-color: #f0f2f5;
+                                color: #95a5a6;
+                            }}
+                        """
+                        self.parent.description_entry.setStyleSheet(
+                            base_style + "QLineEdit { background-color: #f9f9f9; color: #7f8c8d; }"
+                        )
+                    except Exception:
+                        pass
+        except Exception as e:
+            logger.warning(f"Fehler beim Laden der Description-Einstellungen: {e}")

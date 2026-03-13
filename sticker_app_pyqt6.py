@@ -954,86 +954,16 @@ class StickerApp(QMainWindow):
 
     # === Description Settings Management ===
     def load_description_settings(self):
-        """Lade gespeicherte Description-Einstellungen"""
-        try:
-            if self.description_settings_path.exists():
-                with open(self.description_settings_path, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    return settings.get('description', ''), settings.get('is_locked', False)
-        except Exception as e:
-            logger.warning(f"Description-Einstellungen konnten nicht geladen werden: {e}")
-        return '', False
+        """Lade gespeicherte Description-Einstellungen (delegiert an SettingsController)."""
+        return self.settings_controller.load_description_settings()
     
     def save_description_settings(self, description: str, is_locked: bool):
-        """Speichere Description-Einstellungen persistent"""
-        try:
-            self.description_settings_path.parent.mkdir(parents=True, exist_ok=True)
-            settings = {
-                'description': description,
-                'is_locked': is_locked
-            }
-            with open(self.description_settings_path, 'w', encoding='utf-8') as f:
-                json.dump(settings, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            logger.error(f"Description-Einstellungen speichern fehlgeschlagen: {e}")
+        """Speichere Description-Einstellungen persistent (delegiert an SettingsController)."""
+        self.settings_controller.save_description_settings(description, is_locked)
     
     def _load_description_settings_on_startup(self):
-        """Lade Description-Einstellungen nach Startup (nach voller Initialisierung)"""
-        try:
-            saved_description, is_locked = self.load_description_settings()
-            # Speichere die Einstellung intern (nicht ins UI-Feld)
-            self._saved_description = saved_description
-            self._saved_description_locked = is_locked
-            
-            # Zeige Lock-Button visuell wenn gespeichert
-            if saved_description and is_locked and hasattr(self, 'description_lock_btn'):
-                self.description_lock_btn.setIcon(qta.icon('ph.lock', color='#856404'))
-                self.description_lock_btn.setIconSize(QSize(20, 20))
-                self.description_lock_btn.setStyleSheet("""
-                    QPushButton {
-                        border: 1px solid #ffeeba;
-                        border-radius: 18px;
-                        background-color: #fff3cd;
-                    }
-                    QPushButton:hover { background-color: #ffe8a1; }
-                """)
-                self.description_is_locked = True
-                
-                # Aber NICHT ins Textfeld eingeben - Feld bleibt leer!
-                # Das verhindert, dass der Start-Sticker die Description erh├ñlt
-                if hasattr(self, 'description_entry'):
-                    self.description_entry.setText("")  # Feld bleibt leer
-                    self.description_entry.setReadOnly(True)
-                    # Stelle auch das Input-Styling auf readonly
-                    try:
-                        custom_colors = getattr(self.theme_config, 'custom_colors', {}) if hasattr(self, 'theme_config') else {}
-                        input_bg = custom_colors.get('input_bg', '#f8f9fa')
-                        input_fg = custom_colors.get('input_fg', '#2c3e50')
-                        border_color = custom_colors.get('border', '#dce1e6')
-                        focus_color = custom_colors.get('accent', '#3498db')
-                        base_style = f"""
-                            QLineEdit {{
-                                border: 1px solid {border_color};
-                                border-radius: 6px;
-                                padding: 6px 10px;
-                                background-color: {input_bg};
-                                color: {input_fg};
-                                font-size: 13px;
-                            }}
-                            QLineEdit:focus {{
-                                border: 1px solid {focus_color};
-                                background-color: #ffffff;
-                            }}
-                            QLineEdit:disabled {{
-                                background-color: #f0f2f5;
-                                color: #95a5a6;
-                            }}
-                        """
-                        self.description_entry.setStyleSheet(base_style + "QLineEdit { background-color: #f9f9f9; color: #7f8c8d; }")
-                    except Exception:
-                        pass  # Fallback zu Standard-Styling
-        except Exception as e:
-            logger.warning(f"Fehler beim Laden der Description-Einstellungen: {e}")
+        """Lade Description-Einstellungen nach Startup (delegiert an SettingsController)."""
+        self.settings_controller.load_description_settings_on_startup()
 
     # === Sticker-Funktionen (delegiert an CollectionController) ===
     def _is_count_multi(self, item):
