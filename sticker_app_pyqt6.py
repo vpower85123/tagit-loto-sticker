@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-Vollständige PyQt6 Version der Sticker Generator App
+Vollst├ñndige PyQt6 Version der Sticker Generator App
 Alle Funktionen aus der tkinter-Version integriert
 
 Module:
@@ -23,6 +23,7 @@ from ui.glass_button import GlassGlowButton, ButtonSettings
 from ui.theme import Theme, create_input_stylesheet, create_dialog_stylesheet, detect_system_dark_mode, get_unified_button_style
 from ui.dialogs import show_info, show_warning, show_error, show_question
 from ui.theme_applier import apply_main_window_theme
+from ui.menu_builder import build_main_menu
 from ui.builders import build_sticker_tab, build_equipment_tab, build_export_tab
 from ui.components import ModernComboBox
 from ui.spinboxes import StyledSpinBox, StyledDoubleSpinBox
@@ -56,7 +57,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import (
     QPixmap, QImage, QPainter, QFont, QIcon, QPalette, QColor, QBrush, QPen,
-    QFontDatabase, QActionGroup, QAction
+    QFontDatabase
 )
 from PyQt6.QtCore import (
     Qt, QTimer, QSize, QRect, QPoint, QPointF, QThread, pyqtSignal, QEvent,
@@ -67,7 +68,7 @@ from PyQt6.QtWidgets import QSplashScreen, QGraphicsOpacityEffect
 from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtGui import QTransform
 
-# PIL für Bildverarbeitung
+# PIL f├╝r Bildverarbeitung
 from PIL import Image, ImageDraw, ImageFont, ImageChops, ImageFilter, ImageQt
 try:
     from PIL.Image import Resampling
@@ -79,7 +80,7 @@ except Exception:
         # Fallback for older PIL versions
         _LANCZOS = 3  # LANCZOS constant value
 
-# ReportLab für PDF-Export (optional)
+# ReportLab f├╝r PDF-Export (optional)
 try:
     from reportlab.pdfgen import canvas as pdf_canvas
     from reportlab.lib.pagesizes import A4
@@ -276,7 +277,7 @@ class StickerApp(QMainWindow):
         """Benutzer abmelden und Login-Screen zeigen."""
         msg = self._create_styled_msgbox(
             "Abmelden",
-            "Möchten Sie sich wirklich abmelden?",
+            "M├Âchten Sie sich wirklich abmelden?",
             QMessageBox.Icon.Question,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
@@ -290,7 +291,7 @@ class StickerApp(QMainWindow):
                 # Login Dialog zeigen
                 dialog = LoginDialog(self.license_manager)
                 if dialog.exec() == QDialog.DialogCode.Accepted:
-                    # Bei Erfolg: Menü neu aufbauen (für Lizenz-Info Update) und Fenster zeigen
+                    # Bei Erfolg: Men├╝ neu aufbauen (f├╝r Lizenz-Info Update) und Fenster zeigen
                     self._create_menu()
                     self.show()
                 else:
@@ -301,10 +302,10 @@ class StickerApp(QMainWindow):
                 warn_msg.exec()
 
     def _new_project(self):
-        """Neues Projekt erstellen (Collection leeren und Felder zurücksetzen)"""
+        """Neues Projekt erstellen (Collection leeren und Felder zur├╝cksetzen)"""
         msg = self._create_styled_msgbox(
             "Neues Projekt",
-            "Möchten Sie ein neues Projekt starten? Die aktuelle Sammlung wird geleert.",
+            "M├Âchten Sie ein neues Projekt starten? Die aktuelle Sammlung wird geleert.",
             QMessageBox.Icon.Question,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
@@ -314,7 +315,7 @@ class StickerApp(QMainWindow):
             # Collection leeren
             self.clear_collection()
             
-            # Eingabefelder zurücksetzen
+            # Eingabefelder zur├╝cksetzen
             if hasattr(self, 'energy_entry'):
                 self.energy_entry.clear()
             if hasattr(self, 'equipment_entry'):
@@ -322,7 +323,7 @@ class StickerApp(QMainWindow):
             if hasattr(self, 'description_entry'):
                 self.description_entry.clear()
             
-            # Preview zurücksetzen
+            # Preview zur├╝cksetzen
             if hasattr(self, 'preview_controller'):
                 self.preview_controller.update_preview()
             
@@ -362,29 +363,29 @@ class StickerApp(QMainWindow):
             logger.exception("Error reloading configs")
 
     def _show_about(self):
-        """Über-Dialog anzeigen"""
+        """├£ber-Dialog anzeigen"""
         about_text = """
 <h2>LOTO Sticker Generator</h2>
 <p><b>Version:</b> 2.0</p>
-<p><b>Beschreibung:</b> Generator für LOTO (Lock-Out Tag-Out) Sticker</p>
+<p><b>Beschreibung:</b> Generator f├╝r LOTO (Lock-Out Tag-Out) Sticker</p>
 <p><b>Features:</b></p>
 <ul>
     <li>Erstellen von einzelnen und mehreren LOTO Stickern</li>
     <li>Equipment-Verwaltung mit hierarchischer Struktur</li>
     <li>PDF-Export mit verschiedenen Formaten</li>
-    <li>Count-Sticker für Single/Multi LOTO</li>
-    <li>Konfigurierbare Einstellungen für Sticker und Count</li>
+    <li>Count-Sticker f├╝r Single/Multi LOTO</li>
+    <li>Konfigurierbare Einstellungen f├╝r Sticker und Count</li>
 </ul>
 <p><b>Entwicklung:</b> TAG!T Team</p>
         """
         
-        QMessageBox.about(self, "Über LOTO Sticker Generator", about_text)
+        QMessageBox.about(self, "├£ber LOTO Sticker Generator", about_text)
 
 
     def __init__(self):
         super().__init__()
         
-        # Lizenzprüfung
+        # Lizenzpr├╝fung
         self.license_manager = LicenseManager()
         if not DISABLE_LOGIN_DIALOG:
             is_valid, message, expiry = self.license_manager.check_license()
@@ -399,7 +400,7 @@ class StickerApp(QMainWindow):
         self.setMinimumSize(1400, 900)
         self.resize(1600, 1000)
         
-        # App-Icon setzen (HQ PNG für beste Qualität in Taskbar)
+        # App-Icon setzen (HQ PNG f├╝r beste Qualit├ñt in Taskbar)
         icon_path = Path(__file__).parent / "assets" / "icons" / "app_icon_hq.png"
         if icon_path.exists():
             self.setWindowIcon(QIcon(str(icon_path)))
@@ -442,7 +443,7 @@ class StickerApp(QMainWindow):
         self.loto_button_group = None
         self.collection_selection_timer = None
         self.collection_scroll_cooldown_timer = None
-        self.count_sticker_copies_spinbox = None  # Für editierbare pro-Sticker Kopien-Anzahl
+        self.count_sticker_copies_spinbox = None  # F├╝r editierbare pro-Sticker Kopien-Anzahl
         self.tab_widget = None
         self.format_combo = None
         self.width_label = None
@@ -462,11 +463,11 @@ class StickerApp(QMainWindow):
         # Form-spezifische Konfigurationen speichern
         self.current_form_type = "rectangle"  # Standard-Form
         self.form_configs = {
-            "rectangle": None,  # Wird beim ersten Laden gefüllt
+            "rectangle": None,  # Wird beim ersten Laden gef├╝llt
             "square": None,
             "circle": None
         }
-        # Speichere die Initial-Konfiguration für Rechteck
+        # Speichere die Initial-Konfiguration f├╝r Rechteck
         self._save_current_form_config()
 
         initial_mode = getattr(self.export_config, 'export_mode', 'multi') or 'multi'
@@ -480,7 +481,7 @@ class StickerApp(QMainWindow):
         # Button-Einstellungen laden
         ButtonSettings.load_from_file()
         
-        # Pfad für persistente Description-Einstellungen
+        # Pfad f├╝r persistente Description-Einstellungen
         self.description_settings_path = Path(__file__).parent / "config" / "description_settings.json"
 
         # ========== SERVICES (Business Logic Layer) ==========
@@ -501,7 +502,7 @@ class StickerApp(QMainWindow):
         self.equipment_service.equipment_changed.connect(self._on_equipment_changed)
         self.equipment_service.equipment_saved.connect(self._on_equipment_saved)
         
-        # Legacy: Direkter Zugriff auf Manager (für Rückwärtskompatibilität)
+        # Legacy: Direkter Zugriff auf Manager (f├╝r R├╝ckw├ñrtskompatibilit├ñt)
         self.sticker_generator = self.sticker_service.generator
         self.equipment_manager = self.equipment_service.get_manager()
         # ======================================================
@@ -509,7 +510,7 @@ class StickerApp(QMainWindow):
         # Count Generator (noch nicht in Service ausgelagert)
         self.count_generator = CountStickerGenerator(self.count_config)
 
-        # Legacy: Collection als Liste (für Rückwärtskompatibilität)
+        # Legacy: Collection als Liste (f├╝r R├╝ckw├ñrtskompatibilit├ñt)
         # TODO: Alle Zugriffe auf self.collection durch self.collection_service ersetzen
         self.collection = []
         self._manual_sort_mode = None
@@ -519,8 +520,8 @@ class StickerApp(QMainWindow):
         # Theme immer auf Light setzen
         self.theme = Theme.LIGHT
 
-        # Preview-Scale für Count (an Sticker-Preview-Scale gekoppelt)
-        # Stelle sicher, dass der geladene Wert das Maximum 2.0 nicht überschreitet
+        # Preview-Scale f├╝r Count (an Sticker-Preview-Scale gekoppelt)
+        # Stelle sicher, dass der geladene Wert das Maximum 2.0 nicht ├╝berschreitet
         loaded_scale = float(getattr(self.sticker_config, 'preview_scale', 2.0) or 2.0)
         if loaded_scale > 2.0:
             self.sticker_config.preview_scale = 2.0
@@ -530,7 +531,7 @@ class StickerApp(QMainWindow):
         # UI aufbauen
         self._build_ui()
         
-        # Timer für Collection Selection Debouncing initialisieren
+        # Timer f├╝r Collection Selection Debouncing initialisieren
         self.collection_selection_timer = QTimer(self)
         self.collection_selection_timer.setSingleShot(True)
         self.collection_selection_timer.timeout.connect(self._on_collection_item_selected_debounced)
@@ -595,8 +596,8 @@ class StickerApp(QMainWindow):
         # Import Controller - verwaltet PDF-Import und Equipment-Import
         self.import_controller = ImportController(parent=self)
 
-        # Timer für Updates
-        # QR-Modus beim Start deaktivieren — wird erst aktiviert wenn Equipment mit QR gewählt wird
+        # Timer f├╝r Updates
+        # QR-Modus beim Start deaktivieren ÔÇö wird erst aktiviert wenn Equipment mit QR gew├ñhlt wird
         if hasattr(self, 'sticker_service') and hasattr(self.sticker_service, 'generator'):
             self.sticker_service.generator.cfg.qr_mode_enabled = False
             self.sticker_service.generator.cfg.qr_image_path = None
@@ -621,7 +622,7 @@ class StickerApp(QMainWindow):
         # Tab Widget (Content) - RECHTS
         self.tab_widget = QTabWidget()
         self.tab_widget.tabBar().hide() # Hide native tabs
-        main_layout.addWidget(self.tab_widget, 1)  # Stretch factor 1 für mehr Platz
+        main_layout.addWidget(self.tab_widget, 1)  # Stretch factor 1 f├╝r mehr Platz
         
         # Connect Magic Menu to Tab Widget
         self.magic_menu.tabSelected.connect(self.tab_widget.setCurrentIndex)
@@ -640,7 +641,7 @@ class StickerApp(QMainWindow):
         from ui.builders import build_pdf_import_tab
         build_pdf_import_tab(self)
 
-        # Verwandle die Tab-Reiter in farbige Marker - DEAKTIVIERT für Magic Menu
+        # Verwandle die Tab-Reiter in farbige Marker - DEAKTIVIERT f├╝r Magic Menu
         # self._apply_tab_marker_buttons()
 
         # Status Bar
@@ -655,20 +656,20 @@ class StickerApp(QMainWindow):
             status_widget.setLayout(status_layout)
             self.status_bar.addWidget(status_widget, 1)
 
-        # Menü erstellen (nach setCentralWidget)
+        # Men├╝ erstellen (nach setCentralWidget)
         self._create_menu()
         
         # Theme anwenden
         self._apply_theme_styles()
         
-        # Lade gespeicherte Description-Einstellungen (nach vollständiger Initialisierung)
+        # Lade gespeicherte Description-Einstellungen (nach vollst├ñndiger Initialisierung)
         QTimer.singleShot(100, self._load_description_settings_on_startup)
     
     # ========== SERVICE EVENT HANDLERS ==========
     
     def _on_equipment_selected_from_tree(self, energy_id: str, equipment: str, symbol: str, qr_path: str = ""):
-        """Handler wenn Equipment aus Tree ausgewählt wird"""
-        # Felder ausfüllen (wenn vorhanden)
+        """Handler wenn Equipment aus Tree ausgew├ñhlt wird"""
+        # Felder ausf├╝llen (wenn vorhanden)
         if hasattr(self, 'energy_entry'):
             self.energy_entry.setText(energy_id)
         if hasattr(self, 'equipment_entry'):
@@ -694,7 +695,7 @@ class StickerApp(QMainWindow):
         logger.info("Sticker generiert via StickerService")
     
     def _on_sticker_config_changed(self, config):
-        """Handler: Sticker-Konfiguration hat sich geändert"""
+        """Handler: Sticker-Konfiguration hat sich ge├ñndert"""
         self.sticker_config = config
         
         # Update Preview Controller
@@ -725,16 +726,16 @@ class StickerApp(QMainWindow):
         show_error(self, "Generierungsfehler", error_msg)
     
     def _on_collection_changed(self):
-        """Handler: Collection hat sich geändert"""
+        """Handler: Collection hat sich ge├ñndert"""
         # Aktualisiere UI-Liste
         self.update_collection_list()
     
     def _on_item_added_to_collection(self, index):
-        """Handler: Item wurde zur Collection hinzugefügt"""
-        logger.info(f"Item {index} zur Collection hinzugefügt")
+        """Handler: Item wurde zur Collection hinzugef├╝gt"""
+        logger.info(f"Item {index} zur Collection hinzugef├╝gt")
     
     def _on_equipment_changed(self):
-        """Handler: Equipment-Daten haben sich geändert"""
+        """Handler: Equipment-Daten haben sich ge├ñndert"""
         if hasattr(self, 'equipment_controller'):
             self.equipment_controller.refresh_tree()
         self.equipment_service.clear_search_cache()
@@ -755,97 +756,16 @@ class StickerApp(QMainWindow):
         self.equipment_controller.import_equipment_from_excel()
 
     def _export_equipment_database(self):
-        """Exportiert die Equipment-Datenbank über EquipmentController."""
+        """Exportiert die Equipment-Datenbank ├╝ber EquipmentController."""
         self.equipment_controller.export_equipment_database()
 
     def _import_equipment_database(self):
-        """Importiert die Equipment-Datenbank über EquipmentController."""
+        """Importiert die Equipment-Datenbank ├╝ber EquipmentController."""
         self.equipment_controller.import_equipment_database()
 
     def _create_menu(self):
-        """Menü erstellen"""
-        try:
-            menubar = self.menuBar()
-            if menubar is None:
-                return
-
-            # Menü leeren, falls es bereits existiert (verhindert Dopplungen)
-            menubar.clear()
-
-            # Datei-Menü
-            file_menu = menubar.addMenu("&Datei")
-            if file_menu:
-                new_action = QAction("&Neu", self)
-                new_action.triggered.connect(self._new_project)
-                new_action.setShortcut("Ctrl+N")
-                file_menu.addAction(new_action)
-
-                file_menu.addSeparator()
-                
-                logout_action = QAction("&Abmelden", self)
-                logout_action.triggered.connect(self.logout)
-                file_menu.addAction(logout_action)
-
-                file_menu.addSeparator()
-
-                exit_action = QAction("&Beenden", self)
-                exit_action.triggered.connect(self.close)
-                exit_action.setShortcut("Ctrl+Q")
-                file_menu.addAction(exit_action)
-
-            # Bearbeiten-Menü
-            edit_menu = menubar.addMenu("&Bearbeiten")
-            if edit_menu:
-                settings_action = QAction("&Sticker-Einstellungen", self)
-                settings_action.triggered.connect(self.open_sticker_settings)
-                settings_action.setShortcut("Ctrl+S")
-                edit_menu.addAction(settings_action)
-
-                count_settings_action = QAction("&Count-Einstellungen", self)
-                count_settings_action.triggered.connect(self.open_count_settings)
-                edit_menu.addAction(count_settings_action)
-                
-            # --- LIZENZ INFO IM MENÜ (RECHTS) ---
-            if hasattr(self, 'license_manager'):
-                is_valid, msg, expiry = self.license_manager.check_license()
-                if is_valid and expiry:
-                    # Container für Lizenz-Info
-                    license_widget = QWidget()
-                    license_widget.setFixedHeight(36)
-                    license_widget.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-                    l_layout = QHBoxLayout(license_widget)
-                    l_layout.setContentsMargins(0, 0, 12, 0)
-                    l_layout.setSpacing(6)
-                    
-                    # Icon
-                    icon = QLabel("🔐")
-                    icon.setStyleSheet("font-size: 14px;")
-                    l_layout.addWidget(icon)
-                    
-                    # Text Info
-                    days_left = (expiry - datetime.datetime.now()).days
-                    info_text = f"Lizenz aktiv: {days_left} Tage"
-                    
-                    # Wenn weniger als 30 Tage, rot markieren
-                    color = "#27ae60" if days_left > 30 else "#e74c3c"
-                    
-                    lbl = QLabel(info_text)
-                    lbl.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 12px;")
-                    l_layout.addWidget(lbl)
-                    
-                    # Logout Button
-                    logout_btn = GlassGlowButton("Abmelden")
-                    logout_btn.setFixedHeight(34)
-                    logout_btn.clicked.connect(self.logout)
-                    l_layout.addWidget(logout_btn)
-
-                    license_widget.adjustSize()
-                    
-                    license_widget.setToolTip(f"Gültig bis: {expiry.strftime('%d.%m.%Y')}")
-                    menubar.setCornerWidget(license_widget, Qt.Corner.TopRightCorner)
-
-        except Exception as e:
-            logger.error(f"Menü-Erstellung fehlgeschlagen: {e}")
+        """Menue erstellen (delegiert an ui.menu_builder)."""
+        build_main_menu(self)
 
     # === Export-Funktionen (delegieren an Export Controller) ===
     
@@ -871,7 +791,7 @@ class StickerApp(QMainWindow):
             )
     
     def _on_sheet_size_changed(self):
-        """Handler: Papierbreite oder -höhe geändert - delegiert an Export Controller"""
+        """Handler: Papierbreite oder -h├Âhe ge├ñndert - delegiert an Export Controller"""
         self.export_controller.on_sheet_size_changed()
         
         # Aktualisiere Visualisierung
@@ -888,7 +808,7 @@ class StickerApp(QMainWindow):
             )
     
     def _on_export_settings_changed(self):
-        """Handler: Export-Einstellungen geändert - delegiert an Export Controller"""
+        """Handler: Export-Einstellungen ge├ñndert - delegiert an Export Controller"""
         # Lese aktuelle Werte aus Spinboxen
         if hasattr(self, 'margin_spin') and self.margin_spin:
             self.export_config.margin_mm = self.margin_spin.value()
@@ -911,7 +831,7 @@ class StickerApp(QMainWindow):
             )
     
     def _on_roll_width_changed(self):
-        """Handler: Rollen-Breite geändert"""
+        """Handler: Rollen-Breite ge├ñndert"""
         roll_spin = getattr(self, 'roll_width_spin', None)
         if roll_spin is not None:
             val = roll_spin.value()
@@ -932,11 +852,11 @@ class StickerApp(QMainWindow):
                 )
     
     def _reset_rotation_lock(self):
-        """Reset die gespeicherte Sticker-Rotation - nicht mehr benötigt (Auto-Rotation)"""
+        """Reset die gespeicherte Sticker-Rotation - nicht mehr ben├Âtigt (Auto-Rotation)"""
         pass
     
     def _calculate_roll_height(self):
-        """Berechne Rollenhöhe - noch nicht implementiert"""
+        """Berechne Rollenh├Âhe - noch nicht implementiert"""
         pass
 
     # === Preview-Funktionen (delegieren an Preview Controller) ===
@@ -946,7 +866,7 @@ class StickerApp(QMainWindow):
         self.preview_controller.update_preview()
     
     def safe_update_count_preview(self):
-        """Sichere Count-Vorschau-Aktualisierung (für externe Aufrufe)"""
+        """Sichere Count-Vorschau-Aktualisierung (f├╝r externe Aufrufe)"""
         try:
             self.update_count_preview()
         except Exception as e:
@@ -959,13 +879,13 @@ class StickerApp(QMainWindow):
         from PIL.ImageQt import ImageQt
         
         try:
-            # Zähle nur reguläre Items (keine COUNT-Sticker)
+            # Z├ñhle nur regul├ñre Items (keine COUNT-Sticker)
             regular_items = [it for it in self.collection 
                            if not (self._is_count_single(it) or self._is_count_multi(it))]
             actual_count = len(regular_items)
             
             if actual_count == 0:
-                actual_count = 1  # Mindestens 1 für Vorschau
+                actual_count = 1  # Mindestens 1 f├╝r Vorschau
                 detail = "Beispiel Equipment"
             else:
                 # Details aus Collection extrahieren - in Reihenfolge!
@@ -983,7 +903,7 @@ class StickerApp(QMainWindow):
                 
                 import re as _re_sort
                 detail_parts.sort(key=lambda s: [int(t) if t.isdigit() else t.lower() for t in _re_sort.split(r'(\d+)', s)])
-                # Als komma-separierte Liste für Count-Sticker
+                # Als komma-separierte Liste f├╝r Count-Sticker
                 detail = ", ".join(detail_parts)
             
             # Count-Sticker generieren mit aktuellem Generator
@@ -1009,7 +929,7 @@ class StickerApp(QMainWindow):
             traceback.print_exc()
     
     def increase_sticker_scale(self):
-        """Sticker-Skalierung erhöhen - delegiert an Preview Controller"""
+        """Sticker-Skalierung erh├Âhen - delegiert an Preview Controller"""
         self.preview_controller.increase_scale()
     
     def decrease_sticker_scale(self):
@@ -1025,7 +945,7 @@ class StickerApp(QMainWindow):
         self.preview_controller.update_scale_from_dial(dial_value)
     
     def _on_preview_text_changed(self, _value):
-        """Debounce für Texteingaben - delegiert an Preview Controller"""
+        """Debounce f├╝r Texteingaben - delegiert an Preview Controller"""
         self.preview_controller.on_text_changed(_value)
     
     def _on_symbol_changed(self, _index):
@@ -1039,7 +959,7 @@ class StickerApp(QMainWindow):
             if hasattr(self, 'current_form_type') and self.current_form_type != preset_type:
                 self._save_current_form_config()
             
-            # Wenn wir bereits gespeicherte Einstellungen für diese Form haben, lade sie
+            # Wenn wir bereits gespeicherte Einstellungen f├╝r diese Form haben, lade sie
             if hasattr(self, 'form_configs') and self.form_configs.get(preset_type) is not None:
                 self._load_form_config(preset_type)
                 self.current_form_type = preset_type
@@ -1051,18 +971,18 @@ class StickerApp(QMainWindow):
                     # Rechteck: Standard LOTO-Format 85mm x 25mm mit stark abgerundeten Ecken
                     self.sticker_config.width_mm = 85.0
                     self.sticker_config.height_mm = 25.0
-                    # 12mm Eckenradius für sehr runden Look (fast halbe Höhe)
+                    # 12mm Eckenradius f├╝r sehr runden Look (fast halbe H├Âhe)
                     self.sticker_config.corner_radius = int(12.0 * px_per_mm)
                     
                 elif preset_type == "square":
-                    # Quadrat: 85mm x 85mm für bessere Lesbarkeit und Proportionen
+                    # Quadrat: 85mm x 85mm f├╝r bessere Lesbarkeit und Proportionen
                     self.sticker_config.width_mm = 85.0
                     self.sticker_config.height_mm = 85.0
-                    # Stark abgerundete Ecken (20mm) für sehr weichen Look
+                    # Stark abgerundete Ecken (20mm) f├╝r sehr weichen Look
                     self.sticker_config.corner_radius = int(20.0 * px_per_mm)
                     
                 elif preset_type == "circle":
-                    # Kreis: 70mm Durchmesser für ausgewogene Größe
+                    # Kreis: 70mm Durchmesser f├╝r ausgewogene Gr├Â├ƒe
                     size_mm = 70.0
                     self.sticker_config.width_mm = size_mm
                     self.sticker_config.height_mm = size_mm
@@ -1074,14 +994,14 @@ class StickerApp(QMainWindow):
                     # Abgerundetes Rechteck: 85mm x 25mm mit deutlichen Eckenradius
                     self.sticker_config.width_mm = 85.0
                     self.sticker_config.height_mm = 25.0
-                    # 5mm Eckenradius für abgerundetes Rechteck
+                    # 5mm Eckenradius f├╝r abgerundetes Rechteck
                     self.sticker_config.corner_radius = int(5.0 * px_per_mm)
                 
-                # Speichere diese neue Konfiguration für diese Form
+                # Speichere diese neue Konfiguration f├╝r diese Form
                 self.current_form_type = preset_type
                 self._save_current_form_config()
             
-            # Speichere die Änderungen
+            # Speichere die ├änderungen
             self.config_manager.save(self.sticker_config, self.count_config, self.theme_config)
             
             # Update Generator und Preview
@@ -1097,7 +1017,7 @@ class StickerApp(QMainWindow):
             msg.exec()
     
     def _save_current_form_config(self):
-        """Speichert die aktuellen Sticker-Einstellungen für die aktuelle Form"""
+        """Speichert die aktuellen Sticker-Einstellungen f├╝r die aktuelle Form"""
         if not hasattr(self, 'current_form_type') or not hasattr(self, 'form_configs'):
             return
         
@@ -1106,7 +1026,7 @@ class StickerApp(QMainWindow):
         self.form_configs[self.current_form_type] = replace(self.sticker_config)
     
     def _load_form_config(self, form_type: str):
-        """Lädt die gespeicherten Einstellungen für eine Form"""
+        """L├ñdt die gespeicherten Einstellungen f├╝r eine Form"""
         if not hasattr(self, 'form_configs') or form_type not in self.form_configs:
             return
         
@@ -1114,7 +1034,7 @@ class StickerApp(QMainWindow):
         if saved_config is None:
             return
         
-        # Übertrage die gespeicherten Werte
+        # ├£bertrage die gespeicherten Werte
         self.sticker_config.width_mm = saved_config.width_mm
         self.sticker_config.height_mm = saved_config.height_mm
         self.sticker_config.corner_radius = saved_config.corner_radius
@@ -1128,7 +1048,7 @@ class StickerApp(QMainWindow):
         self.sticker_config.font_path = saved_config.font_path
     
     def _load_preset_by_index(self, preset_index: int):
-        """Lädt ein gespeichertes Sticker-Preset nach Index (0, 1, 2) für Preset 1, 2, 3"""
+        """L├ñdt ein gespeichertes Sticker-Preset nach Index (0, 1, 2) f├╝r Preset 1, 2, 3"""
         try:
             import json
             from core.paths import get_config_path
@@ -1211,11 +1131,11 @@ class StickerApp(QMainWindow):
     # === Settings-Funktionen (delegieren an Settings Controller) ===
     
     def open_sticker_settings(self):
-        """Sticker-Einstellungen öffnen - delegiert an Settings Controller"""
+        """Sticker-Einstellungen ├Âffnen - delegiert an Settings Controller"""
         self.settings_controller.open_sticker_settings()
     
     def open_count_settings(self):
-        """Count-Einstellungen öffnen - delegiert an Settings Controller"""
+        """Count-Einstellungen ├Âffnen - delegiert an Settings Controller"""
         self.settings_controller.open_count_settings()
     
     def save_and_update_sticker(self):
@@ -1232,9 +1152,9 @@ class StickerApp(QMainWindow):
         """Synchronisiere Toggle-Zustand mit Export-Konfiguration und Legacy-State.
         
         Args:
-            mode_or_bool: Entweder ein String ('single', 'multi', 'none') oder ein Boolean (für Rückwärtskompatibilität)
+            mode_or_bool: Entweder ein String ('single', 'multi', 'none') oder ein Boolean (f├╝r R├╝ckw├ñrtskompatibilit├ñt)
         """
-        # Rückwärtskompatibilität: Boolean zu String konvertieren
+        # R├╝ckw├ñrtskompatibilit├ñt: Boolean zu String konvertieren
         if isinstance(mode_or_bool, bool):
             mode = 'multi' if mode_or_bool else 'single'
         else:
@@ -1253,7 +1173,7 @@ class StickerApp(QMainWindow):
 
         if getattr(self, 'export_config', None):
             self.export_config.export_mode = mode
-            # IMMER speichern wenn Modus geändert wird (nicht nur wenn anders als previous)
+            # IMMER speichern wenn Modus ge├ñndert wird (nicht nur wenn anders als previous)
             try:
                 self.config_manager.save_export(self.export_config)
                 logger.info(f"LOTO Modus gespeichert: {mode}")
@@ -1268,7 +1188,7 @@ class StickerApp(QMainWindow):
             self.export_controller._update_roll_mode_visibility()
 
     def compute_auto_sheet_height(self, count_mode, regular_items, count_single_items, sheet_w_mm, header_h_mm=0.0):
-        """Berechnet automatische Seitenhöhe über den ExportController."""
+        """Berechnet automatische Seitenh├Âhe ├╝ber den ExportController."""
         return self.export_controller.compute_auto_sheet_height(
             count_mode,
             regular_items,
@@ -1325,7 +1245,7 @@ class StickerApp(QMainWindow):
                 self.description_is_locked = True
                 
                 # Aber NICHT ins Textfeld eingeben - Feld bleibt leer!
-                # Das verhindert, dass der Start-Sticker die Description erhält
+                # Das verhindert, dass der Start-Sticker die Description erh├ñlt
                 if hasattr(self, 'description_entry'):
                     self.description_entry.setText("")  # Feld bleibt leer
                     self.description_entry.setReadOnly(True)
@@ -1466,15 +1386,15 @@ class StickerApp(QMainWindow):
         self.collection_controller._regenerate_multi_count_sticker()
 
     def move_item_up(self):
-        """Gewähltes Element nach oben — delegiert an CollectionController"""
+        """Gew├ñhltes Element nach oben ÔÇö delegiert an CollectionController"""
         self.collection_controller.move_item_up()
 
     def move_item_down(self):
-        """Gewähltes Element nach unten — delegiert an CollectionController"""
+        """Gew├ñhltes Element nach unten ÔÇö delegiert an CollectionController"""
         self.collection_controller.move_item_down()
 
     def delete_selected_items(self):
-        """Gewählte Elemente aus der Sammlung löschen — delegiert an CollectionController"""
+        """Gew├ñhlte Elemente aus der Sammlung l├Âschen ÔÇö delegiert an CollectionController"""
         self.collection_controller.delete_selected_items()
 
     def _apply_theme_styles(self):
@@ -1484,7 +1404,7 @@ class StickerApp(QMainWindow):
 
     
     def _select_equipment(self):
-        """Equipment-Auswahl-Dialog öffnen (delegiert an EquipmentController)."""
+        """Equipment-Auswahl-Dialog ├Âffnen (delegiert an EquipmentController)."""
         self.equipment_controller.select_equipment_for_form()
 
 
@@ -1495,7 +1415,7 @@ if __name__ == '__main__':
     import math
     app = QApplication(sys.argv)
     
-    # Setze globale Light Palette - deaktiviere Windows Dark Mode für diese App
+    # Setze globale Light Palette - deaktiviere Windows Dark Mode f├╝r diese App
     from PyQt6.QtGui import QPalette, QColor
     light_palette = QPalette()
     light_palette.setColor(QPalette.ColorRole.Window, QColor(243, 243, 243))
@@ -1510,7 +1430,7 @@ if __name__ == '__main__':
     app.setPalette(light_palette)
     
     # Setze globalen Light Stylesheet (nur die wichtigsten Teile)
-    app.setStyle("Fusion")  # Verwende Fusion Style für konsistente mit Palette
+    app.setStyle("Fusion")  # Verwende Fusion Style f├╝r konsistente mit Palette
     
     # Animierter Splash Screen mit Partikel-Effekt
     splash_pixmap = None
@@ -1570,7 +1490,7 @@ if __name__ == '__main__':
                 self._opacity = 1.0
                 self._logo_opacity = 0.0
                 
-                # Canvas Größe
+                # Canvas Gr├Â├ƒe
                 self.canvas_size = max(size.width(), size.height()) + 200
                 self.setFixedSize(self.canvas_size, self.canvas_size)
                 
@@ -1584,7 +1504,7 @@ if __name__ == '__main__':
                 # Logo als Bild rendern
                 self.logo_image = self._render_logo_to_image()
                 
-                # Partikel extrahieren (weniger für Performance)
+                # Partikel extrahieren (weniger f├╝r Performance)
                 self._extract_particles()
             
             def _render_logo_to_image(self):
@@ -1605,7 +1525,7 @@ if __name__ == '__main__':
             def _extract_particles(self):
                 self.particles = []
                 
-                # Weniger Partikel für bessere Performance
+                # Weniger Partikel f├╝r bessere Performance
                 step = 8
                 
                 center_x = self.canvas_size // 2
@@ -1621,7 +1541,7 @@ if __name__ == '__main__':
                             target_x = offset_x + x
                             target_y = offset_y + y
                             
-                            # Startposition außerhalb
+                            # Startposition au├ƒerhalb
                             angle = random.uniform(0, 2 * math.pi)
                             dist = random.uniform(250, 450)
                             start_x = target_x + math.cos(angle) * dist
