@@ -6,7 +6,7 @@ Verwaltet alle Equipment-Tree Operationen und UI-Logik
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from PyQt6.QtWidgets import (
     QTreeWidget, QTreeWidgetItem, QInputDialog, QMenu,
-    QMessageBox, QLabel, QProgressDialog, QDialog
+    QMessageBox, QLabel, QProgressDialog, QDialog, QFileDialog
 )
 from PyQt6.QtCore import QObject, pyqtSignal, Qt, QTimer, QPoint, QCoreApplication
 from PyQt6.QtGui import QAction, QBrush, QColor
@@ -2468,6 +2468,232 @@ class EquipmentController(QObject):
 
     def select_equipment_dialog(self):
         """Equipment-Auswahl-Dialog öffnen"""
-        # Hier könnte ein Dialog geöffnet werden
-        # Wird später implementiert wenn benötigt
-        pass
+        from dialogs.equipment_dialog import EquipmentSelectionDialog
+        from ui.theme import Theme
+
+        dialog = EquipmentSelectionDialog(self.parent_app, self.equipment_manager, Theme.LIGHT)
+        dialog.setWindowTitle("Ziel-System auswählen")
+        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.selected_data:
+            return dialog.selected_data
+        return None
+
+    def select_equipment_for_form(self):
+        """Öffnet Equipment-Auswahl und befüllt das Hauptformular."""
+        data = self.select_equipment_dialog()
+        if not data:
+            return
+
+        app = self.parent_app
+        if app is None:
+            return
+
+        # Equipment Name
+        if hasattr(app, 'equipment_entry') and app.equipment_entry:
+            app.equipment_entry.setText(data.get('equipment_name', ''))
+
+        # Energy ID
+        if hasattr(app, 'energy_entry') and app.energy_entry and data.get('energy_id'):
+            app.energy_entry.setText(data.get('energy_id'))
+
+        # Description
+        if hasattr(app, 'description_entry') and app.description_entry:
+            app.description_entry.setText("MAIN SWITCH")
+
+        # Symbol Type
+        symbol_type = data.get('symbol_type', '')
+        if hasattr(app, 'symbol_combo') and app.symbol_combo and symbol_type:
+            symbol_name = symbol_type.capitalize()
+            index = app.symbol_combo.findText(symbol_name)
+            if index >= 0:
+                app.symbol_combo.setCurrentIndex(index)
+
+    def import_equipment_from_excel(self):
+        """Excel-Import für Equipment - aktuell deaktiviert."""
+        app = self.parent_app
+        if app and hasattr(app, '_create_styled_msgbox'):
+            msg = app._create_styled_msgbox("Info", "Excel-Import ist derzeit nicht verfügbar.")
+            msg.exec()
+            return
+
+        QMessageBox.information(self.equipment_tree, "Info", "Excel-Import ist derzeit nicht verfügbar.")
+
+    def export_equipment_database(self):
+        """Exportiert die Equipment-Datenbank als JSON-Datei."""
+        try:
+            import json
+
+            file_path, _ = QFileDialog.getSaveFileName(
+                self.parent_app,
+                "Equipment-Datenbank exportieren",
+                "equipment_backup.json",
+                "JSON Dateien (*.json);;Alle Dateien (*.*)"
+            )
+
+            if not file_path:
+                return
+
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(self.equipment_manager.equipment_data, f, indent=2, ensure_ascii=False)
+
+            if self.parent_app and hasattr(self.parent_app, '_create_styled_msgbox'):
+                msg = self.parent_app._create_styled_msgbox(
+                    "Erfolg",
+                    f"Equipment-Datenbank erfolgreich exportiert!\n\n{file_path}"
+                )
+                msg.exec()
+            else:
+                QMessageBox.information(self.equipment_tree, "Erfolg", f"Export erfolgreich:\n{file_path}")
+
+        except Exception as e:
+            logger.error(f"Export fehlgeschlagen: {e}", exc_info=True)
+            if self.parent_app and hasattr(self.parent_app, '_create_styled_msgbox'):
+                msg = self.parent_app._create_styled_msgbox("Fehler", f"Export fehlgeschlagen:\n{str(e)}")
+                msg.exec()
+            else:
+                QMessageBox.critical(self.equipment_tree, "Fehler", f"Export fehlgeschlagen:\n{str(e)}")
+
+    def import_equipment_database(self):
+        """Importiert Equipment-Datenbank aus JSON-Datei."""
+        try:
+            from PyQt6.QtWidgets import QFileDialog, QDialog, QVBoxLayout, QHBoxLayout, QLabel
+            from ui.glass_button import GlassGlowButton
+            import json
+
+            file_path, _ = QFileDialog.getOpenFileName(
+                self.parent_app,
+                "Equipment-Datenbank importieren",
+                "",
+                "JSON Dateien (*.json);;Alle Dateien (*.*)"
+            )
+
+            if not file_path:
+                return
+
+            dialog = QDialog(self.parent_app)
+            dialog.setWindowTitle("Import bestätigen")
+            dialog.setModal(True)
+            dialog.setFixedWidth(500)
+            dialog.setStyleSheet("""
+                QDialog {
+                    background-color: #f4f6f9;
+                }
+                QLabel {
+                    color: #2c3e50;
+                }
+            """)
+
+            layout = QVBoxLayout(dialog)
+            layout.setSpacing(15)
+            layout.setContentsMargins(25, 20, 25, 20)
+
+            question_label = QLabel("Möchten Sie die aktuelle Datenbank ersetzen\noder die Daten zusammenführen?")
+            question_label.setStyleSheet("font-size: 13px; font-weight: bold;")
+            layout.addWidget(question_label)
+
+            info_label = QLabel("• Ersetzen = Alte Daten werden überschrieben\n• Zusammenführen = Neue Daten werden hinzugefügt")
+            info_label.setStyleSheet("font-size: 11px; color: #666;")
+            layout.addWidget(info_label)
+
+            layout.addSpacing(10)
+
+            button_layout = QHBoxLayout()
+            button_layout.setSpacing(10)
+
+            replace_btn = GlassGlowButton("Ändern")
+            replace_btn.setFixedHeight(38)
+            replace_btn.setMinimumWidth(140)
+
+            merge_btn = GlassGlowButton("Zusammenführen")
+            merge_btn.setFixedHeight(38)
+            merge_btn.setMinimumWidth(180)
+
+            cancel_btn = GlassGlowButton("Abbrechen")
+            cancel_btn.setFixedHeight(38)
+            cancel_btn.setMinimumWidth(120)
+
+            dialog.result_action = None
+
+            def on_replace():
+                dialog.result_action = "replace"
+                dialog.accept()
+
+            def on_merge():
+                dialog.result_action = "merge"
+                dialog.accept()
+
+            replace_btn.clicked.connect(on_replace)
+            merge_btn.clicked.connect(on_merge)
+            cancel_btn.clicked.connect(dialog.reject)
+
+            button_layout.addWidget(replace_btn)
+            button_layout.addWidget(merge_btn)
+            button_layout.addStretch()
+            button_layout.addWidget(cancel_btn)
+            layout.addLayout(button_layout)
+
+            if dialog.exec() != QDialog.DialogCode.Accepted:
+                return
+
+            action = dialog.result_action
+
+            with open(file_path, 'r', encoding='utf-8') as f:
+                imported_data = json.load(f)
+
+            if not isinstance(imported_data, dict):
+                raise ValueError("Ungültiges Dateiformat")
+
+            if action == "replace":
+                self.equipment_manager.equipment_data = imported_data
+            else:
+                for location, location_data in imported_data.items():
+                    if location not in self.equipment_manager.equipment_data:
+                        self.equipment_manager.equipment_data[location] = location_data
+                    else:
+                        existing_systems = self.equipment_manager.equipment_data[location].get('systems', [])
+                        imported_systems = location_data.get('systems', [])
+
+                        for imp_sys in imported_systems:
+                            sys_exists = False
+                            for ex_sys in existing_systems:
+                                if ex_sys.get('name') == imp_sys.get('name'):
+                                    ex_equip = ex_sys.get('equipment', [])
+                                    imp_equip = imp_sys.get('equipment', [])
+
+                                    for eq in imp_equip:
+                                        eq_exists = any(e.get('name') == eq.get('name') for e in ex_equip)
+                                        if not eq_exists:
+                                            ex_equip.append(eq)
+
+                                    ex_sys['equipment'] = ex_equip
+                                    sys_exists = True
+                                    break
+
+                            if not sys_exists:
+                                existing_systems.append(imp_sys)
+
+                        self.equipment_manager.equipment_data[location]['systems'] = existing_systems
+
+            self.equipment_manager.save()
+            self.refresh_tree()
+
+            count_locations = len(imported_data)
+            if self.parent_app and hasattr(self.parent_app, '_create_styled_msgbox'):
+                msg = self.parent_app._create_styled_msgbox(
+                    "Erfolg",
+                    f"Import erfolgreich!\n\n{count_locations} Standort(e) importiert."
+                )
+                msg.exec()
+            else:
+                QMessageBox.information(
+                    self.equipment_tree,
+                    "Erfolg",
+                    f"Import erfolgreich!\n\n{count_locations} Standort(e) importiert."
+                )
+
+        except Exception as e:
+            logger.error(f"Import fehlgeschlagen: {e}", exc_info=True)
+            if self.parent_app and hasattr(self.parent_app, '_create_styled_msgbox'):
+                msg = self.parent_app._create_styled_msgbox("Fehler", f"Import fehlgeschlagen:\n{str(e)}")
+                msg.exec()
+            else:
+                QMessageBox.critical(self.equipment_tree, "Fehler", f"Import fehlgeschlagen:\n{str(e)}")
