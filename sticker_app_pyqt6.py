@@ -775,88 +775,26 @@ class StickerApp(QMainWindow):
     def _on_format_preset_changed(self, text: str):
         """Handler: Papierformat Preset gewechselt - delegiert an Export Controller"""
         self.export_controller.on_format_preset_changed(text)
-        
-        # Aktualisiere Visualisierung
-        if hasattr(self, 'dimensions_widget'):
-            self.dimensions_widget.set_dimensions(
-                self.export_config.sheet_width_mm,
-                self.export_config.sheet_height_mm,
-                self.export_config.margin_mm,
-                self.export_config.gap_mm,
-                self.export_config.roll_mode,
-                self.sticker_config.width_mm,
-                self.sticker_config.height_mm,
-                self.export_config.roll_width_mm
-            )
     
     def _on_sheet_size_changed(self):
         """Handler: Papierbreite oder -h├Âhe ge├ñndert - delegiert an Export Controller"""
         self.export_controller.on_sheet_size_changed()
-        
-        # Aktualisiere Visualisierung
-        if hasattr(self, 'dimensions_widget'):
-            self.dimensions_widget.set_dimensions(
-                self.export_config.sheet_width_mm,
-                self.export_config.sheet_height_mm,
-                self.export_config.margin_mm,
-                self.export_config.gap_mm,
-                self.export_config.roll_mode,
-                self.sticker_config.width_mm,
-                self.sticker_config.height_mm,
-                self.export_config.roll_width_mm
-            )
     
     def _on_export_settings_changed(self):
         """Handler: Export-Einstellungen ge├ñndert - delegiert an Export Controller"""
-        # Lese aktuelle Werte aus Spinboxen
-        if hasattr(self, 'margin_spin') and self.margin_spin:
-            self.export_config.margin_mm = self.margin_spin.value()
-        if hasattr(self, 'gap_spin') and self.gap_spin:
-            self.export_config.gap_mm = self.gap_spin.value()
-        
         self.export_controller.on_export_settings_changed()
-        
-        # Aktualisiere Visualisierung
-        if hasattr(self, 'dimensions_widget'):
-            self.dimensions_widget.set_dimensions(
-                self.export_config.sheet_width_mm,
-                self.export_config.sheet_height_mm,
-                self.export_config.margin_mm,
-                self.export_config.gap_mm,
-                self.export_config.roll_mode,
-                self.sticker_config.width_mm,
-                self.sticker_config.height_mm,
-                self.export_config.roll_width_mm
-            )
     
     def _on_roll_width_changed(self):
-        """Handler: Rollen-Breite ge├ñndert"""
-        roll_spin = getattr(self, 'roll_width_spin', None)
-        if roll_spin is not None:
-            val = roll_spin.value()
-            self.export_config.roll_width_mm = val
-            self.export_controller.on_roll_width_changed(val)
-            
-            # Aktualisiere Visualisierung
-            if hasattr(self, 'dimensions_widget'):
-                self.dimensions_widget.set_dimensions(
-                    self.export_config.sheet_width_mm,
-                    self.export_config.sheet_height_mm,
-                    self.export_config.margin_mm,
-                    self.export_config.gap_mm,
-                    self.export_config.roll_mode,
-                    self.sticker_config.width_mm,
-                    self.sticker_config.height_mm,
-                    self.export_config.roll_width_mm
-                )
+        """Handler: Rollen-Breite geändert - delegiert an Export Controller"""
+        self.export_controller.on_roll_width_changed()
     
     def _reset_rotation_lock(self):
         """Reset die gespeicherte Sticker-Rotation - nicht mehr ben├Âtigt (Auto-Rotation)"""
         pass
     
     def _calculate_roll_height(self):
-        """Berechne Rollenh├Âhe - noch nicht implementiert"""
-        pass
+        """Berechne Rollenhöhe - delegiert an Export Controller"""
+        return self.export_controller.calculate_roll_height()
 
     # === Preview-Funktionen (delegieren an Preview Controller) ===
     

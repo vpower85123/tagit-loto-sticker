@@ -89,6 +89,7 @@ class ExportController(QObject):
             self.config_manager.save_export(self.export_config)
             logger.info("Rollenmodus aktiviert")
             self.settings_changed.emit()
+            self._update_dimensions_widget()
             
         elif text in presets:
             # Deaktiviere Rollen-Modus bei DIN-Formaten
@@ -115,6 +116,7 @@ class ExportController(QObject):
             
             logger.info(f"Papierformat gewechselt: {text}")
             self.settings_changed.emit()
+            self._update_dimensions_widget()
     
     def on_sheet_size_changed(self):
         """Handler: Papierbreite oder -höhe geändert"""
@@ -156,6 +158,7 @@ class ExportController(QObject):
             # Speichere die Einstellungen
             self.config_manager.save_export(self.export_config)
             self.settings_changed.emit()
+            self._update_dimensions_widget()
             
         except Exception as e:
             logger.error(f"Fehler beim Ändern der Seitengröße: {e}")
@@ -163,21 +166,58 @@ class ExportController(QObject):
     def on_export_settings_changed(self):
         """Handler: Irgendeine Export-Einstellung geändert"""
         try:
+            # Lese ggf. aktuelle Werte aus App-Spinboxen
+            margin_spin = getattr(self.parent_app, 'margin_spin', None)
+            gap_spin = getattr(self.parent_app, 'gap_spin', None)
+            if margin_spin is not None:
+                self.export_config.margin_mm = margin_spin.value()
+            if gap_spin is not None:
+                self.export_config.gap_mm = gap_spin.value()
+
             # Speichere alle Änderungen
             self.config_manager.save_export(self.export_config)
             self.settings_changed.emit()
+            self._update_dimensions_widget()
         except Exception as e:
             logger.error(f"Fehler beim Speichern der Export-Einstellungen: {e}")
     
-    def on_roll_width_changed(self, width_mm: float):
+    def on_roll_width_changed(self, width_mm: Optional[float] = None):
         """Handler: Rollenbreite geändert"""
         try:
+            if width_mm is None:
+                roll_spin = getattr(self.parent_app, 'roll_width_spin', None)
+                if roll_spin is None:
+                    return
+                width_mm = roll_spin.value()
+
             self.export_config.roll_width_mm = width_mm
             self.config_manager.save_export(self.export_config)
             self.settings_changed.emit()
+            self._update_dimensions_widget()
             logger.info(f"Rollenbreite geändert auf: {width_mm}mm")
         except Exception as e:
             logger.error(f"Fehler beim Ändern der Rollenbreite: {e}")
+
+    def calculate_roll_height(self):
+        """Berechne Rollenhöhe (Platzhalter, aktuell nicht verwendet)."""
+        return None
+
+    def _update_dimensions_widget(self):
+        """Aktualisiert die Dimensions-Vorschau, falls vorhanden."""
+        widget = getattr(self.parent_app, 'dimensions_widget', None)
+        if widget is None or self.parent_app is None:
+            return
+
+        widget.set_dimensions(
+            self.export_config.sheet_width_mm,
+            self.export_config.sheet_height_mm,
+            self.export_config.margin_mm,
+            self.export_config.gap_mm,
+            self.export_config.roll_mode,
+            self.parent_app.sticker_config.width_mm,
+            self.parent_app.sticker_config.height_mm,
+            self.export_config.roll_width_mm,
+        )
 
     def _update_roll_mode_visibility(self):
         """Aktualisiere Sichtbarkeit von Höhen-Eingabe basierend auf Roll-Modus"""
