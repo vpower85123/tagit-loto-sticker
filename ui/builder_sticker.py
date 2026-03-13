@@ -517,8 +517,8 @@ def build_sticker_tab(self):
     collection_card_content.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
 
     collection_card_layout = QVBoxLayout(collection_card_content)
-    collection_card_layout.setContentsMargins(12, 0, 12, 8)
-    collection_card_layout.setSpacing(8)
+    collection_card_layout.setContentsMargins(14, 8, 14, 10)
+    collection_card_layout.setSpacing(10)
     
     # Collection Container kommt ZUERST (nimmt den meisten Platz)
     collection_container = QWidget()
@@ -527,7 +527,7 @@ def build_sticker_tab(self):
     collection_container.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
     collection_layout = QHBoxLayout(collection_container)
     collection_layout.setContentsMargins(0, 0, 0, 0)
-    collection_layout.setSpacing(12)
+    collection_layout.setSpacing(10)
 
     self.collection_list = QListWidget()
     self.collection_list.setMinimumHeight(150)
@@ -635,13 +635,15 @@ def build_sticker_tab(self):
     # Container mit runden Ecken für die Liste
     from PyQt6.QtWidgets import QFrame
     list_container = QFrame()
-    list_container.setStyleSheet("""
-        QFrame {
+    list_container.setStyleSheet(
+        f"""
+        QFrame {{
             background-color: #ffffff;
-            border: 1px solid #e2e8f0;
+            border: 1px solid {border_color};
             border-radius: 16px;
-        }
-    """)
+        }}
+        """
+    )
     list_container.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
     list_container_layout = QVBoxLayout(list_container)
     list_container_layout.setContentsMargins(0, 0, 0, 0)
@@ -652,13 +654,16 @@ def build_sticker_tab(self):
     # Ablage-Verwaltung Buttons (Vertikal rechts)
     button_container = QWidget()
     button_container.setFixedWidth(72)
-    button_container.setStyleSheet("""
-        QWidget {
+    button_container.setStyleSheet(
+        f"""
+        QWidget {{
             background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #e8edf5, stop:1 #dce3ed);
+                        stop:0 #f7f9fc, stop:1 #eaf0f7);
+            border: 1px solid {border_color};
             border-radius: 14px;
-        }
-    """)
+        }}
+        """
+    )
     coll_btn_layout = QVBoxLayout(button_container)
     coll_btn_layout.setContentsMargins(8, 10, 8, 10)
     coll_btn_layout.setSpacing(8)
@@ -667,40 +672,28 @@ def build_sticker_tab(self):
     # Helper für Keyboard-Style Buttons mit Phosphor Icons (kbd.css Style)
     def create_keyboard_btn(icon_name, tooltip, slot, color="#64748b"):
         btn = QPushButton()
-        btn.setFixedSize(56, 56)
+        btn.setFixedSize(52, 52)
         btn.setToolTip(tooltip)
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setIcon(qta.icon(icon_name, color=color))
-        btn.setIconSize(QSize(26, 26))
+        btn.setIconSize(QSize(24, 24))
 
-        btn.setStyleSheet(f"""
+        btn.setStyleSheet(
+            f"""
             QPushButton {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                            stop:0 #fcfcfd, stop:0.6 #f0f2f5, stop:1 #e8ebef);
-                border: 1px solid #b8bcc4;
-                border-radius: 7px;
-                border-bottom: 3px solid #a0a4ac;
-                padding-bottom: 2px;
-                /* kbd.css inset shadow simulation */
-                border-top: 1px solid #d4d7dd;
-                border-left: 1px solid #c8ccd4;
-                border-right: 1px solid #c0c4cc;
+                background-color: #ffffff;
+                border: 1px solid {border_color};
+                border-radius: 10px;
             }}
             QPushButton:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                            stop:0 #ffffff, stop:0.6 #f5f7fa, stop:1 #eef0f4);
-                border-bottom: 3px solid #9098a4;
+                border-color: {focus_color};
+                background-color: {hover_bg};
             }}
             QPushButton:pressed {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                            stop:0 #e8ebef, stop:0.4 #eceef2, stop:1 #f0f2f5);
-                border-bottom: 1px solid #b8bcc4;
-                border-top: 2px solid #a0a4ac;
-                padding-top: 3px;
-                padding-bottom: 0px;
-                margin-top: 2px;
+                background-color: #eaf2fb;
             }}
-        """)
+            """
+        )
         btn.clicked.connect(slot)
         return btn
 
@@ -734,8 +727,27 @@ def build_sticker_tab(self):
     # Button kommt VOR der Liste (oben)
     import_equipment_btn = self.create_wave_button("Ablage in Equipment übernehmen")
     import_equipment_btn.setIcon(create_symbol_icon("plus", size=20))
-    import_equipment_btn.setMinimumHeight(52)
+    import_equipment_btn.setMinimumHeight(46)
     import_equipment_btn.setFixedWidth(action_btn_width)
+    import_equipment_btn.setStyleSheet(
+        f"""
+        QPushButton {{
+            border: 1px solid {border_color};
+            border-radius: 12px;
+            background-color: #ffffff;
+            color: {fg_color};
+            font-weight: 600;
+            padding: 8px 14px;
+        }}
+        QPushButton:hover {{
+            border-color: {focus_color};
+            background-color: {hover_bg};
+        }}
+        QPushButton:pressed {{
+            background-color: {hover_bg};
+        }}
+        """
+    )
     import_equipment_btn.clicked.connect(self.import_collection_to_equipment_manager)
     collection_card_layout.insertWidget(0, import_equipment_btn, alignment=Qt.AlignmentFlag.AlignCenter)
     
