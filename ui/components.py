@@ -157,25 +157,18 @@ class ModernComboBox(QComboBox):
         else:
             color = QColor("#95a5a6") # Grey
         
-        # Position und Größe des Pfeils
+        # Position und Groesse des Pfeils
         rect = self.rect()
-        arrow_x = rect.right() - 20
+        arrow_x = rect.right() - 18
         arrow_y = rect.center().y()
-        
-        # Chevron nach unten
-        chevron = QPolygonF([
-            QPointF(arrow_x - 4, arrow_y - 3),
-            QPointF(arrow_x, arrow_y + 2),
-            QPointF(arrow_x + 4, arrow_y - 3),
-        ])
-        
-        # Zeichne Chevron
-        pen = QPen(color, 2.0)
+
+        # Zeichne Chevron als zwei Linien fuer klarere Kanten auf High-DPI
+        pen = QPen(color, 1.8)
         pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
         painter.setPen(pen)
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawPolyline(chevron)
+        painter.drawLine(QPointF(arrow_x - 4, arrow_y - 2), QPointF(arrow_x, arrow_y + 2))
+        painter.drawLine(QPointF(arrow_x, arrow_y + 2), QPointF(arrow_x + 4, arrow_y - 2))
 
 
 class ShimmerLabel(QLabel):

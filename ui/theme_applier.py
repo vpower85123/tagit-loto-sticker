@@ -30,19 +30,6 @@ def apply_main_window_theme(window) -> None:
         QLabel {{
             color: {colors['fg']};
         }}
-        QComboBox::drop-down {{
-            border: none;
-            width: 28px;
-        }}
-        QComboBox::down-arrow {{
-            image: none;
-            width: 0px;
-            height: 0px;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-top: 6px solid #64748b;
-            margin-right: 8px;
-        }}
         QMenuBar {{
             background-color: {colors['bg']};
             color: {colors['fg']};
